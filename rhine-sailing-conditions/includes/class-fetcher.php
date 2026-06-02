@@ -8,11 +8,15 @@
 
 class RSC_Fetcher {
 
-	// KNMI API endpoint for Arnhem area (coordinates: 51.9850, 5.8910)
-	const KNMI_API_URL = 'https://api.knmi.nl/';
+	// Open-Meteo API endpoint (free, no auth required)
+	const OPENMETEO_API_URL = 'https://api.open-meteo.com/v1/forecast';
 
 	// Rijkswaterstaat API endpoint for Rhine data
 	const RIJKSWATERSTAAT_API_URL = 'https://rijkswaterstaatdata.nl/waterdata/';
+
+	// Rhine location coordinates
+	const LOCATION_LATITUDE = 51.9850;
+	const LOCATION_LONGITUDE = 5.8910;
 
 	// Rhine location identifiers
 	const LOCATION_ARNHEM = 'ARNM';
@@ -95,19 +99,71 @@ class RSC_Fetcher {
 	}
 
 	/**
-	 * Fetch current wind data from KNMI
-	 * Placeholder: Replace with actual KNMI API call
+	 * Fetch current wind data from Open-Meteo API
+	 * Free, open-source weather API with no authentication required
 	 *
 	 * @return array|false Wind data or false on error
 	 */
 	private static function fetch_knmi_wind() {
-		// TODO: Implement actual KNMI API call
-		// For now, return mock data for testing
-		return array(
-			'direction' => 'NE',
-			'speed'     => 12.5,
-			'gust'      => 18.0,
+		$url = self::OPENMETEO_API_URL . '?latitude=' . self::LOCATION_LATITUDE . '&longitude=' . self::LOCATION_LONGITUDE . '&current=wind_speed_10m,wind_direction_10m&timezone=Europe/Amsterdam';
+
+		$args = array(
+			'timeout'     => 10,
+			'httpversion' => '1.1',
+			'user-agent'  => 'Rhine-Sailing-Plugin/1.0',
 		);
+
+		$response = wp_remote_get( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			self::log_error( 'Open-Meteo API error: ' . $response->get_error_message() );
+			return false;
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+
+		if ( ! is_array( $data ) || ! isset( $data['current'] ) ) {
+			self::log_error( 'Invalid Open-Meteo response format' );
+			return false;
+		}
+
+		// Convert km/h to knots (1 km/h = 0.539957 knots)
+		$wind_speed_kmh = floatval( $data['current']['wind_speed_10m'] );
+		$wind_speed_knots = $wind_speed_kmh * 0.539957;
+
+		// Convert wind direction (degrees) to cardinal direction
+		$wind_direction_deg = intval( $data['current']['wind_direction_10m'] );
+		$wind_direction = self::degrees_to_direction( $wind_direction_deg );
+
+		// Estimate gust as 150% of average wind speed (typical ratio)
+		$gust_knots = $wind_speed_knots * 1.5;
+
+		$wind_data = array(
+			'direction' => $wind_direction,
+			'speed'     => round( $wind_speed_knots, 1 ),
+			'gust'      => round( $gust_knots, 1 ),
+		);
+
+		// Validate before returning
+		if ( ! RSC_Validator::validate_wind( $wind_data ) ) {
+			self::log_error( 'Wind data validation failed' );
+			return false;
+		}
+
+		return $wind_data;
+	}
+
+	/**
+	 * Convert degrees to cardinal direction
+	 *
+	 * @param int $degrees Wind direction in degrees (0-360)
+	 * @return string Cardinal direction (N, NE, E, SE, S, SW, W, NW)
+	 */
+	private static function degrees_to_direction( $degrees ) {
+		$directions = array( 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW' );
+		$index = intval( ( ( $degrees + 22.5 ) / 45 ) ) % 8;
+		return $directions[ $index ];
 	}
 
 	/**
@@ -139,46 +195,55 @@ class RSC_Fetcher {
 	}
 
 	/**
-	 * Fetch wind forecast from KNMI
-	 * Placeholder: Replace with actual KNMI API call
+	 * Fetch wind forecast from Open-Meteo API
+	 * Returns hourly forecasts for next 6 hours
 	 *
 	 * @return array|false Forecast array or false on error
 	 */
 	private static function fetch_knmi_wind_forecast() {
-		// TODO: Implement actual KNMI API call
-		// For now, return mock data for testing
-		return array(
-			array(
-				'hour'      => 0,
-				'speed'     => 12.5,
-				'direction' => 'NE',
-			),
-			array(
-				'hour'      => 1,
-				'speed'     => 14.0,
-				'direction' => 'NE',
-			),
-			array(
-				'hour'      => 2,
-				'speed'     => 16.0,
-				'direction' => 'E',
-			),
-			array(
-				'hour'      => 3,
-				'speed'     => 15.0,
-				'direction' => 'E',
-			),
-			array(
-				'hour'      => 4,
-				'speed'     => 13.0,
-				'direction' => 'NE',
-			),
-			array(
-				'hour'      => 5,
-				'speed'     => 12.0,
-				'direction' => 'N',
-			),
+		$url = self::OPENMETEO_API_URL . '?latitude=' . self::LOCATION_LATITUDE . '&longitude=' . self::LOCATION_LONGITUDE . '&hourly=wind_speed_10m&forecast_days=1&timezone=Europe/Amsterdam';
+
+		$args = array(
+			'timeout'     => 10,
+			'httpversion' => '1.1',
+			'user-agent'  => 'Rhine-Sailing-Plugin/1.0',
 		);
+
+		$response = wp_remote_get( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			self::log_error( 'Open-Meteo forecast API error: ' . $response->get_error_message() );
+			return false;
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+
+		if ( ! is_array( $data ) || ! isset( $data['hourly'], $data['hourly']['wind_speed_10m'] ) ) {
+			self::log_error( 'Invalid Open-Meteo forecast response' );
+			return false;
+		}
+
+		// Build forecast array with first 6 hours
+		$forecast = array();
+		$wind_speeds = $data['hourly']['wind_speed_10m'];
+
+		for ( $hour = 0; $hour < min( 6, count( $wind_speeds ) ); $hour++ ) {
+			$wind_speed_kmh = floatval( $wind_speeds[ $hour ] );
+			$wind_speed_knots = $wind_speed_kmh * 0.539957;
+
+			$forecast[] = array(
+				'hour'  => $hour,
+				'speed' => round( $wind_speed_knots, 1 ),
+			);
+		}
+
+		if ( empty( $forecast ) ) {
+			self::log_error( 'No forecast data available' );
+			return false;
+		}
+
+		return $forecast;
 	}
 
 	/**
