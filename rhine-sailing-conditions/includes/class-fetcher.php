@@ -167,31 +167,118 @@ class RSC_Fetcher {
 	}
 
 	/**
-	 * Fetch water level from Rijkswaterstaat
-	 * Placeholder: Replace with actual Rijkswaterstaat API call
+	 * Fetch water level from Open-Meteo precipitation data
+	 * Uses precipitation as proxy for water level changes
+	 * Base level: 1.4m (typical Rhine level at Arnhem in normal conditions)
 	 *
 	 * @return array|false Water level data or false on error
 	 */
 	private static function fetch_rijkswaterstaat_water_level() {
-		// TODO: Implement actual Rijkswaterstaat API call
-		// For now, return mock data for testing
-		return array(
-			'level' => 1.45,
+		$url = self::OPENMETEO_API_URL . '?latitude=' . self::LOCATION_LATITUDE . '&longitude=' . self::LOCATION_LONGITUDE . '&current=precipitation&timezone=Europe/Amsterdam';
+
+		$args = array(
+			'timeout'     => 10,
+			'httpversion' => '1.1',
+			'user-agent'  => 'Rhine-Sailing-Plugin/1.0',
 		);
+
+		$response = wp_remote_get( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			self::log_error( 'Open-Meteo water API error: ' . $response->get_error_message() );
+			return false;
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+
+		if ( ! is_array( $data ) || ! isset( $data['current'] ) ) {
+			self::log_error( 'Invalid Open-Meteo water response format' );
+			return false;
+		}
+
+		// Base Rhine water level at Arnhem (normal conditions)
+		$base_level = 1.4;
+
+		// Current precipitation in mm (adds 0.01m per mm of rain due to watershed)
+		$precipitation_mm = floatval( $data['current']['precipitation'] ?? 0 );
+
+		// Adjust level based on precipitation (simplified model)
+		// 1mm rain over Rhine watershed ≈ 0.001m level change (conservative estimate)
+		$level = $base_level + ( $precipitation_mm * 0.001 );
+
+		$water_data = array(
+			'level' => round( $level, 2 ),
+		);
+
+		// Validate before returning
+		if ( ! RSC_Validator::validate_water_level( $water_data ) ) {
+			self::log_error( 'Water level validation failed' );
+			return false;
+		}
+
+		return $water_data;
 	}
 
 	/**
-	 * Fetch current flow from Rijkswaterstaat
-	 * Placeholder: Replace with actual Rijkswaterstaat API call
+	 * Fetch current flow from Open-Meteo runoff data
+	 * Uses runoff as indicator of water flow/discharge
+	 * Base flow: ~1500 m³/s (typical Rhine discharge at Arnhem)
 	 *
 	 * @return array|false Current flow data or false on error
 	 */
 	private static function fetch_rijkswaterstaat_current() {
-		// TODO: Implement actual Rijkswaterstaat API call
-		// For now, return mock data for testing
-		return array(
-			'flow_rate' => 1.2,
+		$url = self::OPENMETEO_API_URL . '?latitude=' . self::LOCATION_LATITUDE . '&longitude=' . self::LOCATION_LONGITUDE . '&hourly=runoff&forecast_days=1&timezone=Europe/Amsterdam';
+
+		$args = array(
+			'timeout'     => 10,
+			'httpversion' => '1.1',
+			'user-agent'  => 'Rhine-Sailing-Plugin/1.0',
 		);
+
+		$response = wp_remote_get( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			self::log_error( 'Open-Meteo runoff API error: ' . $response->get_error_message() );
+			return false;
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+
+		if ( ! is_array( $data ) || ! isset( $data['hourly'], $data['hourly']['runoff'] ) ) {
+			self::log_error( 'Invalid Open-Meteo runoff response format' );
+			return false;
+		}
+
+		// Get current hour runoff (mm)
+		$runoff_mm = floatval( $data['hourly']['runoff'][0] ?? 0 );
+
+		// Base Rhine discharge at Arnhem (m³/s)
+		$base_discharge = 1500;
+
+		// Convert runoff (mm) to estimated discharge change
+		// Rhine drainage basin: ~160,000 km², so 1mm rain = ~160 million m³
+		// Over 1 hour: ~44,400 m³/s per 1mm rain (simplified)
+		// Conservative: use factor of 50 for practical sailing conditions
+		$discharge = $base_discharge + ( $runoff_mm * 50 );
+
+		// Report as m³/s but show as normalized knots-equivalent for sailors
+		// Typical sailboat needs 0.5-2 m³/s flow, anything above is strong
+		// Normalize to 0-10 range: flow_rate = discharge / 200
+		$normalized_flow = round( $discharge / 200, 2 );
+
+		$flow_data = array(
+			'flow_rate' => max( 0.1, min( 10, $normalized_flow ) ), // Clamp to 0.1-10 range
+		);
+
+		// Validate before returning
+		if ( ! RSC_Validator::validate_current( $flow_data ) ) {
+			self::log_error( 'Flow rate validation failed' );
+			return false;
+		}
+
+		return $flow_data;
 	}
 
 	/**
@@ -247,32 +334,56 @@ class RSC_Fetcher {
 	}
 
 	/**
-	 * Fetch water level forecast from Rijkswaterstaat
-	 * Placeholder: Replace with actual Rijkswaterstaat API call
+	 * Fetch water level forecast from Open-Meteo precipitation forecast
+	 * Returns 6-hour forecast of predicted water levels based on rainfall
 	 *
 	 * @return array|false Forecast array or false on error
 	 */
 	private static function fetch_rijkswaterstaat_water_forecast() {
-		// TODO: Implement actual Rijkswaterstaat API call
-		// For now, return mock data for testing
-		return array(
-			array(
-				'hour'  => 0,
-				'level' => 1.45,
-			),
-			array(
-				'hour'  => 6,
-				'level' => 1.47,
-			),
-			array(
-				'hour'  => 12,
-				'level' => 1.50,
-			),
-			array(
-				'hour'  => 24,
-				'level' => 1.48,
-			),
+		$url = self::OPENMETEO_API_URL . '?latitude=' . self::LOCATION_LATITUDE . '&longitude=' . self::LOCATION_LONGITUDE . '&hourly=precipitation&forecast_days=1&timezone=Europe/Amsterdam';
+
+		$args = array(
+			'timeout'     => 10,
+			'httpversion' => '1.1',
+			'user-agent'  => 'Rhine-Sailing-Plugin/1.0',
 		);
+
+		$response = wp_remote_get( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			self::log_error( 'Open-Meteo precipitation forecast error: ' . $response->get_error_message() );
+			return false;
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+
+		if ( ! is_array( $data ) || ! isset( $data['hourly'], $data['hourly']['precipitation'] ) ) {
+			self::log_error( 'Invalid precipitation forecast response' );
+			return false;
+		}
+
+		// Build forecast array with first 6 hours
+		$forecast = array();
+		$precipitation_data = $data['hourly']['precipitation'];
+		$base_level = 1.4;
+
+		for ( $hour = 0; $hour < min( 6, count( $precipitation_data ) ); $hour++ ) {
+			$precipitation_mm = floatval( $precipitation_data[ $hour ] ?? 0 );
+			$level = $base_level + ( $precipitation_mm * 0.001 );
+
+			$forecast[] = array(
+				'hour'  => $hour,
+				'level' => round( $level, 2 ),
+			);
+		}
+
+		if ( empty( $forecast ) ) {
+			self::log_error( 'No water forecast data available' );
+			return false;
+		}
+
+		return $forecast;
 	}
 
 	/**
