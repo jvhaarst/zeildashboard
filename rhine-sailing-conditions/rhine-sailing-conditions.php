@@ -12,20 +12,34 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// ============================================================================
+// Plugin Header & Constants
+// ============================================================================
+// Define plugin paths, URLs, and version constants for use throughout the plugin.
 define( 'RSC_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'RSC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'RSC_PLUGIN_VERSION', '1.0.0' );
 
-// Include core classes
+// ============================================================================
+// Class Includes
+// ============================================================================
+// Load core plugin classes for caching, validation, data fetching, and display.
 require_once RSC_PLUGIN_PATH . 'includes/class-cache.php';
 require_once RSC_PLUGIN_PATH . 'includes/class-validator.php';
 require_once RSC_PLUGIN_PATH . 'includes/class-fetcher.php';
 require_once RSC_PLUGIN_PATH . 'includes/class-display.php';
 
-// Register shortcode
+// ============================================================================
+// Shortcode Registration
+// ============================================================================
+// Register the [rhine-sailing-conditions] shortcode for displaying data in posts/pages.
 add_shortcode( 'rhine-sailing-conditions', array( 'RSC_Display', 'render_shortcode' ) );
 
-// Schedule cron jobs on plugin activation
+// ============================================================================
+// Activation/Deactivation Hooks
+// ============================================================================
+// Schedule/unschedule cron tasks when plugin is activated/deactivated.
+
 register_activation_hook( __FILE__, 'rsc_schedule_cron' );
 
 function rsc_schedule_cron() {
@@ -37,7 +51,6 @@ function rsc_schedule_cron() {
     }
 }
 
-// Unschedule cron jobs on plugin deactivation
 register_deactivation_hook( __FILE__, 'rsc_unschedule_cron' );
 
 function rsc_unschedule_cron() {
@@ -45,11 +58,17 @@ function rsc_unschedule_cron() {
     wp_clear_scheduled_hook( 'rsc_fetch_forecast' );
 }
 
-// Hook cron tasks to fetcher
+// ============================================================================
+// Cron Action Hooks
+// ============================================================================
+// Connect cron events to their handler methods in the Fetcher class.
 add_action( 'rsc_fetch_current_conditions', array( 'RSC_Fetcher', 'fetch_current_conditions' ) );
 add_action( 'rsc_fetch_forecast', array( 'RSC_Fetcher', 'fetch_forecast' ) );
 
-// Enqueue styles
+// ============================================================================
+// Style Enqueuing
+// ============================================================================
+// Load plugin stylesheet on the frontend.
 add_action( 'wp_enqueue_scripts', 'rsc_enqueue_styles' );
 
 function rsc_enqueue_styles() {
