@@ -1,0 +1,151 @@
+/* Rhine Sailing Conditions Dashboard */
+
+.rsc-dashboard {
+    margin: 20px 0;
+    padding: 0;
+    font-family: inherit;
+}
+
+.rsc-header {
+    background-color: #f5f5f5;
+    padding: 15px;
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 15px;
+}
+
+.rsc-header h3 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.rsc-updated {
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.rsc-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 15px 0;
+}
+
+/* Current Conditions Panel */
+.rsc-current {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rsc-condition {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 12px;
+    border-radius: 4px;
+}
+
+.rsc-label {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.rsc-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 3px;
+}
+
+.rsc-sub {
+    font-size: 12px;
+    color: #999;
+}
+
+/* Forecast Panel */
+.rsc-forecast {
+    display: flex;
+    flex-direction: column;
+}
+
+.rsc-forecast-header {
+    margin-bottom: 12px;
+}
+
+.rsc-forecast-header h4 {
+    margin: 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.rsc-forecast-chart {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.rsc-forecast-point {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px;
+    background: #f9f9f9;
+    border-radius: 3px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.rsc-forecast-hour {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.rsc-forecast-speed {
+    font-size: 13px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Error State */
+.rsc-error {
+    background-color: #fee;
+    color: #c33;
+    padding: 15px;
+    border: 1px solid #fcc;
+    border-radius: 4px;
+    margin: 20px 0;
+}
+
+/* Responsive: Mobile */
+@media (max-width: 600px) {
+    .rsc-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .rsc-forecast-chart {
+        flex-wrap: wrap;
+    }
+
+    .rsc-forecast-point {
+        min-width: 50px;
+        padding: 6px;
+    }
+
+    .rsc-header h3 {
+        font-size: 16px;
+    }
+
+    .rsc-value {
+        font-size: 16px;
+    }
+}
