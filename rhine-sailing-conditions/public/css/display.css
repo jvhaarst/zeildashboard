@@ -125,6 +125,17 @@
     margin: 20px 0;
 }
 
+/* Stale Data Warning */
+.rsc-stale {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 10px 15px;
+    border: 1px solid #ffeeba;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 13px;
+}
+
 /* Responsive: Mobile */
 @media (max-width: 600px) {
     .rsc-container {

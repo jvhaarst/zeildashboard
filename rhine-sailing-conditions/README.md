@@ -40,15 +40,15 @@ A WordPress plugin that displays real-time sailing conditions for the Rhine Rive
 
 ### Classes
 - `RSC_Fetcher` – Handles API calls to Open-Meteo and Rijkswaterstaat DDAPI
-  - `fetch_knmi_wind()` – Current wind from Open-Meteo
-  - `fetch_rijkswaterstaat_water_level()` – Water height (WATHTE) from RWS
-  - `fetch_rijkswaterstaat_current_speed()` – Current speed (STROOMSHD) from RWS
-  - `fetch_rijkswaterstaat_temperature()` – Water temperature (T) from RWS
-  - `fetch_knmi_wind_forecast()` – Wind forecast from Open-Meteo
-  - `fetch_rijkswaterstaat_water_forecast()` – Water forecast (precipitation-based)
+  - `fetch_current_conditions()` – Orchestrates wind + water fetch and caching
+  - `fetch_openmeteo_wind()` – Current wind from Open-Meteo
+  - `fetch_openmeteo_wind_forecast()` – 6-hour wind forecast from Open-Meteo
+  - `fetch_rws_measurements()` – Water height (WATHTE), current speed (STROOMSHD)
+    and temperature (T) from a single RWS DDAPI request
 - `RSC_Validator` – Validates API response data and measurement values
+  (`validate_wind`, `validate_water_level`, `validate_current_speed`, `validate_temperature`)
 - `RSC_Cache` – Wraps WordPress options for data storage with timestamps
-- `RSC_Display` – Renders the shortcode with sailing conditions assessment
+- `RSC_Display` – Renders the shortcode (Dutch UI) with a stale-data warning
 
 ### Caching Strategy
 - Current conditions: Cached for 30 minutes (fetched every 15 min)

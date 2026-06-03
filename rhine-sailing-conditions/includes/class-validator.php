@@ -8,7 +8,12 @@
 
 class RSC_Validator {
 
-    const VALID_DIRECTIONS = array( 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW' );
+    // 16-point Dutch compass directions.
+    const VALID_DIRECTIONS = array( 'N', 'NNO', 'NO', 'ONO', 'O', 'OZO', 'ZO', 'ZZO', 'Z', 'ZZW', 'ZW', 'WZW', 'W', 'WNW', 'NW', 'NNW' );
+
+    // Plausible water temperature range (°C) for the Rhine.
+    const MIN_TEMPERATURE = -5;
+    const MAX_TEMPERATURE = 40;
 
     /**
      * Validate wind data from API
@@ -67,23 +72,50 @@ class RSC_Validator {
     }
 
     /**
-     * Validate current flow data from API
+     * Validate current speed data from API
      *
-     * @param array $data Current data array
+     * @param array $data Current speed data array (speed_knots required)
      * @return bool
      */
-    public static function validate_current( $data ) {
+    public static function validate_current_speed( $data ) {
         if ( ! is_array( $data ) ) {
             return false;
         }
 
         // Check required field
-        if ( ! isset( $data['flow_rate'] ) ) {
+        if ( ! isset( $data['speed_knots'] ) ) {
             return false;
         }
 
-        // Validate flow_rate is numeric and non-negative
-        if ( ! is_numeric( $data['flow_rate'] ) || $data['flow_rate'] < 0 ) {
+        // Validate speed is numeric and non-negative
+        if ( ! is_numeric( $data['speed_knots'] ) || $data['speed_knots'] < 0 ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate water temperature data from API
+     *
+     * @param array $data Temperature data array (celsius required)
+     * @return bool
+     */
+    public static function validate_temperature( $data ) {
+        if ( ! is_array( $data ) ) {
+            return false;
+        }
+
+        // Check required field
+        if ( ! isset( $data['celsius'] ) ) {
+            return false;
+        }
+
+        // Validate temperature is numeric and within a plausible range
+        if ( ! is_numeric( $data['celsius'] ) ) {
+            return false;
+        }
+        if ( $data['celsius'] < self::MIN_TEMPERATURE || $data['celsius'] > self::MAX_TEMPERATURE ) {
             return false;
         }
 

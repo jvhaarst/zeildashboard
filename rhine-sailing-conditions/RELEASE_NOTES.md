@@ -1,11 +1,23 @@
-# Rhine Sailing Conditions Plugin - v1.0 Release
+# Rhine Sailing Conditions Plugin - v1.1 Release
 
 ## Release Information
-- **Version**: 1.0.0
-- **Release Date**: June 2, 2026
-- **Latest Update**: June 3, 2026 (Real RWS API Integration)
-- **Git Tag**: v1.0
+- **Version**: 1.1.0
+- **Initial Release**: June 2, 2026
+- **Latest Update**: June 3, 2026 (Real RWS API integration + plugin reconciliation)
 - **Status**: Production Ready with Real Data
+
+## v1.1.0 Changes
+- Registered the custom 15-min/30-min cron intervals (without this the fetch
+  jobs never ran)
+- Backported the reference data model into the plugin: Driel boven location,
+  current speed (STROOMSHD) and water temperature (T)
+- Water level, current speed and temperature now come from a single RWS request
+- Added HTTP status-code checks to all API calls
+- Fixed cache timestamps not updating when fetched data was unchanged
+- Removed the precipitation-based "water level forecast" (it produced a
+  meaningless near-constant value)
+- Dutch UI strings are now translatable; added a stale-data warning
+- Fixed test assertions (`assertGreaterThan`) and aligned tests with the new model
 
 ## What's Included
 
@@ -16,22 +28,20 @@
   - Water height (Waterhoogte) in meters NAP
   - Current speed (Stroomsnelheid) in knots/m/s
   - Water temperature (Temperatuur) in °C
-- **Integrated sailing assessment**: Wind + water analysis with recommendations
 - **6-hour wind forecast** display
 - **Responsive HTML shortcode** `[rhine-sailing-conditions]`
 - **Dutch interface** for Dutch sailing community
 
 ### Architecture
 - **RSC_Cache**: WordPress options-based caching with timestamps
-- **RSC_Validator**: Comprehensive data validation for all API responses
+- **RSC_Validator**: Data validation (`validate_wind`, `validate_water_level`,
+  `validate_current_speed`, `validate_temperature`)
 - **RSC_Fetcher**: Real API integration
-  - `fetch_knmi_wind()` - Real wind data from Open-Meteo
-  - `fetch_rijkswaterstaat_water_level()` - Real water height from RWS DDAPI
-  - `fetch_rijkswaterstaat_current_speed()` - Real current speed from RWS DDAPI
-  - `fetch_rijkswaterstaat_temperature()` - Real water temperature from RWS DDAPI
-  - `fetch_knmi_wind_forecast()` - Wind forecast from Open-Meteo
-  - `fetch_rijkswaterstaat_water_forecast()` - Water level forecast (precipitation-based)
-- **RSC_Display**: Frontend rendering with graceful degradation
+  - `fetch_openmeteo_wind()` - Real wind data from Open-Meteo
+  - `fetch_openmeteo_wind_forecast()` - 6-hour wind forecast from Open-Meteo
+  - `fetch_rws_measurements()` - Water height (WATHTE), current speed (STROOMSHD)
+    and temperature (T) parsed from one RWS DDAPI request
+- **RSC_Display**: Frontend rendering with graceful degradation and stale-data warning
 
 ### WordPress Integration
 - Automatic cron scheduling on activation (15-min current conditions, 30-min forecasts)

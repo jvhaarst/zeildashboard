@@ -7,7 +7,7 @@ class Test_RSC_Validator extends WP_UnitTestCase {
 
     public function test_validate_wind_data_valid() {
         $data = array(
-            'direction' => 'NE',
+            'direction' => 'NO',
             'speed' => 12.5,
             'gust' => 18.0,
         );
@@ -17,7 +17,7 @@ class Test_RSC_Validator extends WP_UnitTestCase {
 
     public function test_validate_wind_data_missing_field() {
         $data = array(
-            'direction' => 'NE',
+            'direction' => 'NO',
             // missing 'speed'
             'gust' => 18.0,
         );
@@ -27,7 +27,7 @@ class Test_RSC_Validator extends WP_UnitTestCase {
 
     public function test_validate_wind_invalid_speed() {
         $data = array(
-            'direction' => 'NE',
+            'direction' => 'NO',
             'speed' => -5, // negative speed invalid
             'gust' => 18.0,
         );
@@ -52,7 +52,7 @@ class Test_RSC_Validator extends WP_UnitTestCase {
 
     public function test_validate_wind_invalid_gust() {
         $data = array(
-            'direction' => 'NE',
+            'direction' => 'NO',
             'speed' => 12.5,
             'gust' => -5,
         );
@@ -84,44 +84,68 @@ class Test_RSC_Validator extends WP_UnitTestCase {
         $this->assertFalse( $result );
     }
 
-    public function test_validate_current_data() {
+    public function test_validate_current_speed_data() {
         $data = array(
-            'flow_rate' => 1.2,
+            'speed_knots' => 1.2,
+            'speed_mps'   => 0.62,
         );
-        $result = RSC_Validator::validate_current( $data );
+        $result = RSC_Validator::validate_current_speed( $data );
         $this->assertTrue( $result );
     }
 
-    public function test_validate_current_missing_field() {
-        $result = RSC_Validator::validate_current( array() );
+    public function test_validate_current_speed_missing_field() {
+        $result = RSC_Validator::validate_current_speed( array() );
         $this->assertFalse( $result );
     }
 
-    public function test_validate_current_negative_flow() {
-        $data = array( 'flow_rate' => -1.5 );
-        $result = RSC_Validator::validate_current( $data );
+    public function test_validate_current_speed_negative() {
+        $data = array( 'speed_knots' => -1.5 );
+        $result = RSC_Validator::validate_current_speed( $data );
         $this->assertFalse( $result );
     }
 
-    public function test_validate_current_non_numeric() {
-        $data = array( 'flow_rate' => 'fast' );
-        $result = RSC_Validator::validate_current( $data );
+    public function test_validate_current_speed_non_numeric() {
+        $data = array( 'speed_knots' => 'fast' );
+        $result = RSC_Validator::validate_current_speed( $data );
+        $this->assertFalse( $result );
+    }
+
+    public function test_validate_temperature_data() {
+        $data = array( 'celsius' => 18.5 );
+        $result = RSC_Validator::validate_temperature( $data );
+        $this->assertTrue( $result );
+    }
+
+    public function test_validate_temperature_missing_field() {
+        $result = RSC_Validator::validate_temperature( array() );
+        $this->assertFalse( $result );
+    }
+
+    public function test_validate_temperature_non_numeric() {
+        $data = array( 'celsius' => 'warm' );
+        $result = RSC_Validator::validate_temperature( $data );
+        $this->assertFalse( $result );
+    }
+
+    public function test_validate_temperature_out_of_range() {
+        $data = array( 'celsius' => 99 );
+        $result = RSC_Validator::validate_temperature( $data );
         $this->assertFalse( $result );
     }
 
     public function test_sanitize_wind_direction_valid_uppercase() {
-        $result = RSC_Validator::sanitize_direction( 'NE' );
-        $this->assertEquals( 'NE', $result );
+        $result = RSC_Validator::sanitize_direction( 'NO' );
+        $this->assertEquals( 'NO', $result );
     }
 
     public function test_sanitize_wind_direction_valid_lowercase() {
-        $result = RSC_Validator::sanitize_direction( 'ne' );
-        $this->assertEquals( 'NE', $result );
+        $result = RSC_Validator::sanitize_direction( 'no' );
+        $this->assertEquals( 'NO', $result );
     }
 
     public function test_sanitize_wind_direction_with_whitespace() {
-        $result = RSC_Validator::sanitize_direction( '  SW  ' );
-        $this->assertEquals( 'SW', $result );
+        $result = RSC_Validator::sanitize_direction( '  ZW  ' );
+        $this->assertEquals( 'ZW', $result );
     }
 
     public function test_sanitize_wind_direction_invalid() {

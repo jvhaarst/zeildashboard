@@ -13,7 +13,7 @@ class RSC_Cache {
      *
      * @param string $key Option key (alphanumeric/underscore)
      * @param mixed  $data Data to store (arrays, strings, numbers, booleans)
-     * @return bool True if both option and timestamp stored, false otherwise
+     * @return bool True if the key was valid and writes were attempted.
      */
     public static function set( $key, $data ) {
         $key = sanitize_key( $key );
@@ -21,10 +21,16 @@ class RSC_Cache {
             return false;
         }
 
-        $option_key = 'rsc_' . $key;
+        $option_key    = 'rsc_' . $key;
         $timestamp_key = 'rsc_timestamp_' . $key;
 
-        return update_option( $option_key, $data ) && update_option( $timestamp_key, time() );
+        // Write both independently. update_option() returns false when the
+        // stored value is unchanged, which is not an error — so we must not
+        // short-circuit the timestamp write behind the data write.
+        update_option( $option_key, $data );
+        update_option( $timestamp_key, time() );
+
+        return true;
     }
 
     /**

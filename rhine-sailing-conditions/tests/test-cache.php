@@ -43,7 +43,7 @@ class Test_RSC_Cache extends WP_UnitTestCase {
         RSC_Cache::set( 'test_timestamp', array( 'value' => 'data' ) );
         $timestamp = RSC_Cache::get_timestamp( 'test_timestamp' );
         $this->assertIsInt( $timestamp );
-        $this->assertGreater( $timestamp, 0 );
+        $this->assertGreaterThan( 0, $timestamp );
     }
 
     public function test_cache_delete() {
