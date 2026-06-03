@@ -167,48 +167,75 @@ class RSC_Fetcher {
 	}
 
 	/**
-	 * Fetch water level from Open-Meteo precipitation data
-	 * Uses precipitation as proxy for water level changes
-	 * Base level: 1.4m (typical Rhine level at Arnhem in normal conditions)
+	 * Fetch water level from RWS DDAPI (Rijkswaterstaat actual measurements)
+	 * Retrieves "Waterhoogte" (water height) in cm from official RWS service
 	 *
 	 * @return array|false Water level data or false on error
 	 */
 	private static function fetch_rijkswaterstaat_water_level() {
-		$url = self::OPENMETEO_API_URL . '?latitude=' . self::LOCATION_LATITUDE . '&longitude=' . self::LOCATION_LONGITUDE . '&current=precipitation&timezone=Europe/Amsterdam';
+		$url = 'https://ddapi20-waterwebservices.rijkswaterstaat.nl/ONLINEWAARNEMINGENSERVICES/OphalenLaatsteWaarnemingen';
+
+		$payload = wp_json_encode( array(
+			'locatieLijst'                    => array( 'arnhem.nederrijn' ),
+			'aquoPlusWaarnemingMetadataLijst' => array(
+				array(
+					'aquoMetadata' => array(
+						'messageID' => 1,
+					),
+				),
+			),
+		) );
 
 		$args = array(
 			'timeout'     => 10,
 			'httpversion' => '1.1',
 			'user-agent'  => 'Rhine-Sailing-Plugin/1.0',
+			'headers'     => array(
+				'Content-Type' => 'application/json',
+			),
+			'body'        => $payload,
+			'method'      => 'POST',
 		);
 
-		$response = wp_remote_get( $url, $args );
+		$response = wp_remote_post( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			self::log_error( 'Open-Meteo water API error: ' . $response->get_error_message() );
+			self::log_error( 'RWS DDAPI error: ' . $response->get_error_message() );
 			return false;
 		}
 
 		$body = wp_remote_retrieve_body( $response );
 		$data = json_decode( $body, true );
 
-		if ( ! is_array( $data ) || ! isset( $data['current'] ) ) {
-			self::log_error( 'Invalid Open-Meteo water response format' );
+		if ( ! is_array( $data ) || ! isset( $data['WaarnemingenLijst'] ) ) {
+			self::log_error( 'Invalid RWS DDAPI response format' );
 			return false;
 		}
 
-		// Base Rhine water level at Arnhem (normal conditions)
-		$base_level = 1.4;
+		// Find water height ("Waterhoogte") measurement
+		$waterhoogte = null;
+		foreach ( $data['WaarnemingenLijst'] as $waarneming ) {
+			if ( isset( $waarneming['AquoMetadata']['Grootheid']['Code'] ) &&
+				 'WATHTE' === $waarneming['AquoMetadata']['Grootheid']['Code'] ) {
 
-		// Current precipitation in mm (adds 0.01m per mm of rain due to watershed)
-		$precipitation_mm = floatval( $data['current']['precipitation'] ?? 0 );
+				// Found water height measurement
+				if ( isset( $waarneming['MetingenLijst'][0]['Meetwaarde']['Waarde_Numeriek'] ) ) {
+					$waterhoogte = floatval( $waarneming['MetingenLijst'][0]['Meetwaarde']['Waarde_Numeriek'] );
+					break;
+				}
+			}
+		}
 
-		// Adjust level based on precipitation (simplified model)
-		// 1mm rain over Rhine watershed ≈ 0.001m level change (conservative estimate)
-		$level = $base_level + ( $precipitation_mm * 0.001 );
+		if ( null === $waterhoogte ) {
+			self::log_error( 'No water height measurement found in RWS response' );
+			return false;
+		}
+
+		// Convert cm to meters
+		$level_meters = $waterhoogte / 100;
 
 		$water_data = array(
-			'level' => round( $level, 2 ),
+			'level' => round( $level_meters, 2 ),
 		);
 
 		// Validate before returning
@@ -221,55 +248,76 @@ class RSC_Fetcher {
 	}
 
 	/**
-	 * Fetch current flow from Open-Meteo runoff data
-	 * Uses runoff as indicator of water flow/discharge
-	 * Base flow: ~1500 m³/s (typical Rhine discharge at Arnhem)
+	 * Fetch current discharge from RWS DDAPI (Rijkswaterstaat actual measurements)
+	 * Retrieves "Debiet" (discharge) in m³/s from official RWS service
 	 *
-	 * @return array|false Current flow data or false on error
+	 * @return array|false Current discharge data or false on error
 	 */
 	private static function fetch_rijkswaterstaat_current() {
-		$url = self::OPENMETEO_API_URL . '?latitude=' . self::LOCATION_LATITUDE . '&longitude=' . self::LOCATION_LONGITUDE . '&hourly=runoff&forecast_days=1&timezone=Europe/Amsterdam';
+		$url = 'https://ddapi20-waterwebservices.rijkswaterstaat.nl/ONLINEWAARNEMINGENSERVICES/OphalenLaatsteWaarnemingen';
+
+		$payload = wp_json_encode( array(
+			'locatieLijst'                    => array( 'arnhem.nederrijn' ),
+			'aquoPlusWaarnemingMetadataLijst' => array(
+				array(
+					'aquoMetadata' => array(
+						'messageID' => 1,
+					),
+				),
+			),
+		) );
 
 		$args = array(
 			'timeout'     => 10,
 			'httpversion' => '1.1',
 			'user-agent'  => 'Rhine-Sailing-Plugin/1.0',
+			'headers'     => array(
+				'Content-Type' => 'application/json',
+			),
+			'body'        => $payload,
+			'method'      => 'POST',
 		);
 
-		$response = wp_remote_get( $url, $args );
+		$response = wp_remote_post( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			self::log_error( 'Open-Meteo runoff API error: ' . $response->get_error_message() );
+			self::log_error( 'RWS DDAPI error: ' . $response->get_error_message() );
 			return false;
 		}
 
 		$body = wp_remote_retrieve_body( $response );
 		$data = json_decode( $body, true );
 
-		if ( ! is_array( $data ) || ! isset( $data['hourly'], $data['hourly']['runoff'] ) ) {
-			self::log_error( 'Invalid Open-Meteo runoff response format' );
+		if ( ! is_array( $data ) || ! isset( $data['WaarnemingenLijst'] ) ) {
+			self::log_error( 'Invalid RWS DDAPI response format' );
 			return false;
 		}
 
-		// Get current hour runoff (mm)
-		$runoff_mm = floatval( $data['hourly']['runoff'][0] ?? 0 );
+		// Find discharge ("Debiet") measurement (prefer non-24h average for current conditions)
+		$debiet = null;
+		foreach ( $data['WaarnemingenLijst'] as $waarneming ) {
+			if ( isset( $waarneming['AquoMetadata']['Grootheid']['Code'] ) &&
+				 'Q' === $waarneming['AquoMetadata']['Grootheid']['Code'] ) {
 
-		// Base Rhine discharge at Arnhem (m³/s)
-		$base_discharge = 1500;
+				// Skip 24-hour averages, use current measurement
+				$bewer_methode = $waarneming['AquoMetadata']['WaardeBewerkingsMethode']['Code'] ?? '';
+				if ( 'GEM24H' !== $bewer_methode ) {
+					// Found discharge measurement
+					if ( isset( $waarneming['MetingenLijst'][0]['Meetwaarde']['Waarde_Numeriek'] ) ) {
+						$debiet = floatval( $waarneming['MetingenLijst'][0]['Meetwaarde']['Waarde_Numeriek'] );
+						break;
+					}
+				}
+			}
+		}
 
-		// Convert runoff (mm) to estimated discharge change
-		// Rhine drainage basin: ~160,000 km², so 1mm rain = ~160 million m³
-		// Over 1 hour: ~44,400 m³/s per 1mm rain (simplified)
-		// Conservative: use factor of 50 for practical sailing conditions
-		$discharge = $base_discharge + ( $runoff_mm * 50 );
-
-		// Report as m³/s but show as normalized knots-equivalent for sailors
-		// Typical sailboat needs 0.5-2 m³/s flow, anything above is strong
-		// Normalize to 0-10 range: flow_rate = discharge / 200
-		$normalized_flow = round( $discharge / 200, 2 );
+		if ( null === $debiet ) {
+			self::log_error( 'No discharge measurement found in RWS response' );
+			return false;
+		}
 
 		$flow_data = array(
-			'flow_rate' => max( 0.1, min( 10, $normalized_flow ) ), // Clamp to 0.1-10 range
+			'flow_rate' => round( $debiet, 2 ),
 		);
 
 		// Validate before returning
