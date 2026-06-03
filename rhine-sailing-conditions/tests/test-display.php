@@ -13,6 +13,7 @@ class Test_RSC_Display extends WP_UnitTestCase {
         RSC_Cache::set( 'current_speed', array( 'speed_knots' => 1.2, 'speed_mps' => 0.62 ) );
         RSC_Cache::set( 'current_temperature', array( 'celsius' => 18.5 ) );
         RSC_Cache::set( 'forecast_wind', array( array( 'hour' => 0, 'speed' => 12 ) ) );
+        RSC_Cache::set( 'forecast_precipitation', array( array( 'hour' => 0, 'precipitation' => 1.4, 'probability' => 60 ) ) );
     }
 
     public function tearDown(): void {
@@ -22,6 +23,7 @@ class Test_RSC_Display extends WP_UnitTestCase {
         RSC_Cache::delete( 'current_speed' );
         RSC_Cache::delete( 'current_temperature' );
         RSC_Cache::delete( 'forecast_wind' );
+        RSC_Cache::delete( 'forecast_precipitation' );
     }
 
     public function test_shortcode_returns_html() {
@@ -66,6 +68,13 @@ class Test_RSC_Display extends WP_UnitTestCase {
     public function test_wind_renders_beaufort() {
         $output = RSC_Display::render_shortcode( array() );
         $this->assertStringContainsString( 'Bft', $output );
+    }
+
+    public function test_precipitation_forecast_renders() {
+        $output = RSC_Display::render_shortcode( array() );
+        // Language-neutral checks: the mm unit and the probability value.
+        $this->assertStringContainsString( 'mm', $output );
+        $this->assertStringContainsString( '60%', $output );
     }
 
     public function test_shortcode_output_contains_css_class() {

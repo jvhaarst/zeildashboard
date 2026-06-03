@@ -1,10 +1,19 @@
-# Rhine Sailing Conditions Plugin - v1.2 Release
+# Rhine Sailing Conditions Plugin - v1.3 Release
 
 ## Release Information
-- **Version**: 1.2.0
+- **Version**: 1.3.0
 - **Initial Release**: June 2, 2026
 - **Latest Update**: June 3, 2026 (Real RWS API integration + plugin reconciliation)
 - **Status**: Production Ready with Real Data
+
+## v1.3.0 Changes
+- Added a **6-hour precipitation forecast** (mm + probability) from Open-Meteo,
+  fetched in the **same single request** as the wind forecast (one source).
+- New `fetch_openmeteo_forecast()` returns wind + precipitation together;
+  cached as `forecast_wind` and `forecast_precipitation`.
+- Display renders a precipitation chart alongside the wind chart; forecast
+  headers relabelled ("Wind (next 6 hours)" / "Precipitation (next 6 hours)").
+- Added translations for the new strings (nl_NL, fy_NL).
 
 ## v1.2.0 Changes
 - Proper i18n: all source strings are now **English**, with gettext
@@ -38,7 +47,7 @@
   - Water height (Waterhoogte) in meters NAP
   - Current speed (Stroomsnelheid) in knots/m/s
   - Water temperature (Temperatuur) in °C
-- **6-hour wind forecast** display
+- **6-hour wind + precipitation forecast** display (one Open-Meteo request)
 - **Responsive HTML shortcode** `[rhine-sailing-conditions]`
 - **Dutch interface** for Dutch sailing community
 
@@ -48,7 +57,7 @@
   `validate_current_speed`, `validate_temperature`)
 - **RSC_Fetcher**: Real API integration
   - `fetch_openmeteo_wind()` - Real wind data from Open-Meteo
-  - `fetch_openmeteo_wind_forecast()` - 6-hour wind forecast from Open-Meteo
+  - `fetch_openmeteo_forecast()` - 6-hour wind + precipitation forecast from Open-Meteo (one request)
   - `fetch_rws_measurements()` - Water height (WATHTE), current speed (STROOMSHD)
     and temperature (T) parsed from one RWS DDAPI request
 - **RSC_Display**: Frontend rendering with graceful degradation and stale-data warning

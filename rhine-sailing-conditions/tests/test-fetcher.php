@@ -18,6 +18,8 @@ class Test_RSC_Fetcher extends WP_UnitTestCase {
 		delete_option( 'rsc_timestamp_current_temperature' );
 		delete_option( 'rsc_forecast_wind' );
 		delete_option( 'rsc_timestamp_forecast_wind' );
+		delete_option( 'rsc_forecast_precipitation' );
+		delete_option( 'rsc_timestamp_forecast_precipitation' );
 		delete_option( 'rsc_last_api_error' );
 		delete_option( 'rsc_timestamp_last_api_error' );
 	}
@@ -30,6 +32,7 @@ class Test_RSC_Fetcher extends WP_UnitTestCase {
 		RSC_Cache::delete( 'current_speed' );
 		RSC_Cache::delete( 'current_temperature' );
 		RSC_Cache::delete( 'forecast_wind' );
+		RSC_Cache::delete( 'forecast_precipitation' );
 	}
 
 	public function test_fetch_current_conditions_success() {
@@ -84,6 +87,16 @@ class Test_RSC_Fetcher extends WP_UnitTestCase {
 		$this->assertNotFalse( $forecast );
 		$this->assertIsArray( $forecast );
 		$this->assertGreaterThan( 0, count( $forecast ) );
+	}
+
+	public function test_forecast_precipitation_cached_after_fetch() {
+		RSC_Fetcher::fetch_forecast();
+		$forecast = RSC_Cache::get( 'forecast_precipitation' );
+		$this->assertNotFalse( $forecast );
+		$this->assertIsArray( $forecast );
+		$this->assertGreaterThan( 0, count( $forecast ) );
+		$this->assertArrayHasKey( 'precipitation', $forecast[0] );
+		$this->assertArrayHasKey( 'hour', $forecast[0] );
 	}
 
 	public function test_fetch_returns_false_on_wind_validation_failure() {

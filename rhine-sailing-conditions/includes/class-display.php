@@ -27,6 +27,7 @@ class RSC_Display {
         $current_speed = RSC_Cache::get( 'current_speed' );
         $temperature   = RSC_Cache::get( 'current_temperature' );
         $wind_forecast = RSC_Cache::get( 'forecast_wind' );
+        $precip_forecast = RSC_Cache::get( 'forecast_precipitation' );
 
         // Check if we have any data
         if ( ! $wind && ! $water_level && ! $current_speed && ! $temperature ) {
@@ -59,9 +60,14 @@ class RSC_Display {
 
         $html .= '</div>'; // .rsc-current
 
-        if ( $wind_forecast ) {
+        if ( $wind_forecast || $precip_forecast ) {
             $html .= '<div class="rsc-forecast">';
-            $html .= self::render_forecast( $wind_forecast );
+            if ( $wind_forecast ) {
+                $html .= self::render_forecast( $wind_forecast );
+            }
+            if ( $precip_forecast ) {
+                $html .= self::render_precipitation_forecast( $precip_forecast );
+            }
             $html .= '</div>'; // .rsc-forecast
         }
 
@@ -184,7 +190,7 @@ class RSC_Display {
         }
 
         $html  = '<div class="rsc-forecast-header">
-            <h4>' . esc_html__( 'Next 6 hours', self::TEXT_DOMAIN ) . '</h4>
+            <h4>' . esc_html__( 'Wind (next 6 hours)', self::TEXT_DOMAIN ) . '</h4>
         </div>';
         $html .= '<div class="rsc-forecast-chart">';
 
@@ -193,7 +199,40 @@ class RSC_Display {
             $hour_num = isset( $hour['hour'] ) ? esc_html( $hour['hour'] ) : '—';
             $html    .= '<div class="rsc-forecast-point">
                 <div class="rsc-forecast-hour">+' . $hour_num . 'u</div>
-                <div class="rsc-forecast-speed">' . $speed . '</div>
+                <div class="rsc-forecast-speed">' . $speed . ' kn</div>
+            </div>';
+        }
+
+        $html .= '</div>';
+        return $html;
+    }
+
+    /**
+     * Render precipitation forecast
+     *
+     * @param array $forecast Precipitation forecast data array
+     * @return string HTML
+     */
+    private static function render_precipitation_forecast( $forecast ) {
+        if ( empty( $forecast ) || ! is_array( $forecast ) ) {
+            return '';
+        }
+
+        $html  = '<div class="rsc-forecast-header">
+            <h4>' . esc_html__( 'Precipitation (next 6 hours)', self::TEXT_DOMAIN ) . '</h4>
+        </div>';
+        $html .= '<div class="rsc-forecast-chart">';
+
+        foreach ( $forecast as $hour ) {
+            $mm       = isset( $hour['precipitation'] ) ? esc_html( $hour['precipitation'] ) : '—';
+            $hour_num = isset( $hour['hour'] ) ? esc_html( $hour['hour'] ) : '—';
+            $prob     = ( isset( $hour['probability'] ) && null !== $hour['probability'] )
+                ? '<div class="rsc-forecast-hour">' . esc_html( $hour['probability'] ) . '%</div>'
+                : '';
+            $html    .= '<div class="rsc-forecast-point">
+                <div class="rsc-forecast-hour">+' . $hour_num . 'u</div>
+                <div class="rsc-forecast-speed">' . $mm . ' mm</div>
+                ' . $prob . '
             </div>';
         }
 

@@ -5,7 +5,8 @@ A WordPress plugin that displays real-time sailing conditions for the Rhine Rive
 ## Features
 
 - **Current Conditions:** Real wind speed/direction; water level; current speed; water temperature
-- **Real Data:** Wind from Open-Meteo; water measurements from Rijkswaterstaat DDAPI
+- **Forecast:** 6-hour wind + precipitation forecast (mm and probability), both from Open-Meteo in one request
+- **Real Data:** Wind/precipitation from Open-Meteo; water measurements from Rijkswaterstaat DDAPI
 - **Sailing Assessment:** Integrated wind + water analysis with sailing recommendations
 - **Auto-Update:** Data refreshes automatically every 15-30 minutes
 - **Resilient:** Gracefully handles API downtime with cached data
@@ -42,7 +43,7 @@ A WordPress plugin that displays real-time sailing conditions for the Rhine Rive
 - `RSC_Fetcher` – Handles API calls to Open-Meteo and Rijkswaterstaat DDAPI
   - `fetch_current_conditions()` – Orchestrates wind + water fetch and caching
   - `fetch_openmeteo_wind()` – Current wind from Open-Meteo
-  - `fetch_openmeteo_wind_forecast()` – 6-hour wind forecast from Open-Meteo
+  - `fetch_openmeteo_forecast()` – 6-hour wind + precipitation forecast from Open-Meteo (single request)
   - `fetch_rws_measurements()` – Water height (WATHTE), current speed (STROOMSHD)
     and temperature (T) from a single RWS DDAPI request
 - `RSC_Validator` – Validates API response data and measurement values

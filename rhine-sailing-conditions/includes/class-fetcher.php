@@ -64,13 +64,14 @@ class RSC_Fetcher {
 	 * @return bool True on success, false on failure
 	 */
 	public static function fetch_forecast() {
-		$wind_forecast = self::fetch_openmeteo_wind_forecast();
-		if ( ! $wind_forecast ) {
-			self::log_error( 'Failed to fetch Open-Meteo wind forecast' );
+		$forecast = self::fetch_openmeteo_forecast();
+		if ( ! $forecast ) {
+			self::log_error( 'Failed to fetch Open-Meteo forecast' );
 			return false;
 		}
 
-		RSC_Cache::set( 'forecast_wind', $wind_forecast );
+		RSC_Cache::set( 'forecast_wind', $forecast['wind'] );
+		RSC_Cache::set( 'forecast_precipitation', $forecast['precipitation'] );
 
 		return true;
 	}
@@ -115,38 +116,54 @@ class RSC_Fetcher {
 	}
 
 	/**
-	 * Fetch wind forecast (next 6 hours) from Open-Meteo API.
+	 * Fetch the next-6-hours wind and precipitation forecast from Open-Meteo.
 	 *
-	 * @return array|false Forecast array or false on error
+	 * Wind and precipitation share the same provider and grid, so both are
+	 * retrieved in a single request to limit the number of sources/calls.
+	 *
+	 * @return array|false Array with 'wind' and 'precipitation' forecast
+	 *                     lists, or false on error.
 	 */
-	private static function fetch_openmeteo_wind_forecast() {
-		$url = self::OPENMETEO_API_URL . '?latitude=' . self::LOCATION_LATITUDE . '&longitude=' . self::LOCATION_LONGITUDE . '&hourly=wind_speed_10m&forecast_days=1&timezone=Europe/Amsterdam';
+	private static function fetch_openmeteo_forecast() {
+		$url = self::OPENMETEO_API_URL . '?latitude=' . self::LOCATION_LATITUDE . '&longitude=' . self::LOCATION_LONGITUDE . '&hourly=wind_speed_10m,precipitation,precipitation_probability&forecast_days=1&timezone=Europe/Amsterdam';
 
 		$data = self::http_get_json( $url, 'Open-Meteo forecast' );
-		if ( false === $data || ! isset( $data['hourly'], $data['hourly']['wind_speed_10m'] ) ) {
+		if ( false === $data || ! isset( $data['hourly']['wind_speed_10m'], $data['hourly']['precipitation'] ) ) {
 			self::log_error( 'Invalid Open-Meteo forecast response' );
 			return false;
 		}
 
-		$forecast    = array();
-		$wind_speeds = $data['hourly']['wind_speed_10m'];
+		$hourly      = $data['hourly'];
+		$wind        = array();
+		$precip      = array();
+		$hours       = min( 6, count( $hourly['wind_speed_10m'] ) );
 
-		for ( $hour = 0; $hour < min( 6, count( $wind_speeds ) ); $hour++ ) {
-			$wind_speed_kmh   = floatval( $wind_speeds[ $hour ] );
-			$wind_speed_knots = $wind_speed_kmh * self::KMH_TO_KNOTS;
-
-			$forecast[] = array(
+		for ( $hour = 0; $hour < $hours; $hour++ ) {
+			$wind_speed_knots = floatval( $hourly['wind_speed_10m'][ $hour ] ) * self::KMH_TO_KNOTS;
+			$wind[] = array(
 				'hour'  => $hour,
 				'speed' => round( $wind_speed_knots, 1 ),
 			);
+
+			$probability = isset( $hourly['precipitation_probability'][ $hour ] )
+				? intval( $hourly['precipitation_probability'][ $hour ] )
+				: null;
+			$precip[] = array(
+				'hour'          => $hour,
+				'precipitation' => round( floatval( $hourly['precipitation'][ $hour ] ?? 0 ), 1 ),
+				'probability'   => $probability,
+			);
 		}
 
-		if ( empty( $forecast ) ) {
+		if ( empty( $wind ) || empty( $precip ) ) {
 			self::log_error( 'No forecast data available' );
 			return false;
 		}
 
-		return $forecast;
+		return array(
+			'wind'          => $wind,
+			'precipitation' => $precip,
+		);
 	}
 
 	/**

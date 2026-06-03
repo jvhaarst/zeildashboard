@@ -3,7 +3,7 @@
  * Plugin Name: Rhine Sailing Conditions
  * Plugin URI: https://example.com
  * Description: Display real-time sailing conditions on the Rhine River
- * Version: 1.2.0
+ * Version: 1.3.0
  * Author: Sailing Club
  * License: GPL2
  * Text Domain: rhine-sailing-conditions
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Define plugin paths, URLs, and version constants for use throughout the plugin.
 define( 'RSC_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'RSC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'RSC_PLUGIN_VERSION', '1.2.0' );
+define( 'RSC_PLUGIN_VERSION', '1.3.0' );
 
 // ============================================================================
 // Class Includes
