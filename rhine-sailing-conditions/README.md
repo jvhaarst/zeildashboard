@@ -77,18 +77,36 @@ All source strings in the code are **English**; the user-facing language is prov
   ```php
   add_filter( 'rsc_locale', function () { return 'fy_NL'; } );
   ```
-- Adding a language: copy the `.pot` to `rhine-sailing-conditions-<locale>.po`, translate, then compile:
+- **Add a language:** copy the `.pot` to `rhine-sailing-conditions-<locale>.po`, translate the `msgstr` entries, then compile:
   ```bash
+  cp languages/rhine-sailing-conditions.pot languages/rhine-sailing-conditions-<locale>.po
+  # ...translate the msgstr lines...
   msgfmt languages/rhine-sailing-conditions-<locale>.po -o languages/rhine-sailing-conditions-<locale>.mo
   ```
+- **Update strings (after changing/adding `__()` calls in the code):** regenerate the template, merge it into each existing translation, then recompile:
+  ```bash
+  # 1. Rebuild the .pot from source (note the _n keyword for plurals)
+  xgettext --language=PHP --from-code=UTF-8 \
+    --keyword=__ --keyword=esc_html__ --keyword=esc_attr__ --keyword=_n:1,2 \
+    -o languages/rhine-sailing-conditions.pot \
+    rhine-sailing-conditions.php includes/*.php
+
+  # 2. Merge new/changed strings into each translation (keeps existing ones)
+  for po in languages/*.po; do msgmerge --update --backup=none "$po" languages/rhine-sailing-conditions.pot; done
+
+  # 3. Fill in any new/“fuzzy” msgstr, then recompile every .mo
+  for po in languages/*.po; do msgfmt "$po" -o "${po%.po}.mo"; done
+  ```
+  Requires the GNU gettext CLI (`xgettext`, `msgmerge`, `msgfmt`).
 
 **Example dashboards (standalone, non-WordPress):**
-- They can't use gettext, so they use a simple translation table in `examples/lang/` (`nl.php`, `fy.php`) via a `t()` helper.
+- They can't use gettext, so they use a simple translation table in `examples/lang/` (`nl.php`, `fy.php`) via a `t()` helper. Missing keys fall back to the English source string.
 - Default is Dutch; switch with an environment variable:
   ```bash
   RSC_LANG=fy php -S localhost:8765
   ```
-- Adding a language: drop a new `examples/lang/<code>.php` returning an `English => translation` array.
+- **Add a language:** drop a new `examples/lang/<code>.php` returning an `English => translation` array.
+- **Update strings:** when you add a new `t('English')` call in a dashboard, add the matching `'English' => '…'` entry to each `examples/lang/<code>.php`. Until you do, that string simply renders in English (the fallback) — no errors.
 
 ## Requirements
 
