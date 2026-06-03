@@ -45,6 +45,7 @@ return array(
     'Too strong'                                              => 'Te sterk',
     'Safe'                                                    => 'Veilig',
     'Ideal conditions: 6-15 knots wind + current under 2.5 knots' => 'Ideale omstandigheden: 6-15 knopen wind + stroming onder 2,5 knopen',
+    'Forecast (next 6 hours)' => 'Verwachting (komende 6 uur)',
 
     // Condition levels
     'Calm'        => 'Windstil',

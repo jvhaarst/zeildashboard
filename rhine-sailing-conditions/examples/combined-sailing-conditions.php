@@ -68,6 +68,29 @@ if (isset($wind_data['current'])) {
     ];
 }
 
+// Fetch 6-hour wind + precipitation forecast from Open-Meteo (one request,
+// same source as the current wind above).
+$forecast_url = sprintf(
+    'https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&hourly=wind_speed_10m,precipitation,precipitation_probability&forecast_days=1&timezone=Europe/Amsterdam',
+    $location['lat'],
+    $location['lon']
+);
+$forecast_data = json_decode(@file_get_contents($forecast_url), true);
+
+$forecast = [];
+if (isset($forecast_data['hourly']['wind_speed_10m'], $forecast_data['hourly']['precipitation'])) {
+    $h = $forecast_data['hourly'];
+    $hours = min(6, count($h['wind_speed_10m']));
+    for ($i = 0; $i < $hours; $i++) {
+        $forecast[] = [
+            'hour'          => $i,
+            'wind_knots'    => round(floatval($h['wind_speed_10m'][$i]) * 0.539957, 1),
+            'precipitation' => round(floatval($h['precipitation'][$i] ?? 0), 1),
+            'probability'   => isset($h['precipitation_probability'][$i]) ? intval($h['precipitation_probability'][$i]) : null,
+        ];
+    }
+}
+
 // Extract water data
 $water = null;
 $current_speed = null;
@@ -387,6 +410,49 @@ $last_update = date('Y-m-d H:i:s');
             font-weight: bold;
             color: #1e3c72;
         }
+
+        .forecast-card {
+            grid-column: 1 / -1;
+        }
+
+        .forecast-grid {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-top: 10px;
+        }
+
+        .forecast-cell {
+            flex: 1 1 0;
+            min-width: 80px;
+            text-align: center;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-top: 3px solid #667eea;
+            padding: 12px 8px;
+        }
+
+        .forecast-hour {
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 8px;
+        }
+
+        .forecast-line {
+            font-size: 0.95em;
+            color: #333;
+            margin: 2px 0;
+        }
+
+        .forecast-sub {
+            font-size: 0.8em;
+            color: #888;
+        }
+
+        .forecast-rain {
+            color: #2a5298;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -526,6 +592,26 @@ $last_update = date('Y-m-d H:i:s');
                     <?php echo htmlspecialchars( t( 'Ideal conditions: 6-15 knots wind + current under 2.5 knots' ) ); ?>
                 </p>
             </div>
+
+            <!-- Forecast Card -->
+            <?php if (!empty($forecast)): ?>
+            <div class="card forecast-card">
+                <h2><?php echo htmlspecialchars( t( 'Forecast (next 6 hours)' ) ); ?></h2>
+                <div class="forecast-grid">
+                    <?php foreach ($forecast as $f): ?>
+                    <div class="forecast-cell">
+                        <div class="forecast-hour">+<?php echo (int)$f['hour']; ?>u</div>
+                        <div class="forecast-line"><?php echo $f['wind_knots']; ?> kn</div>
+                        <div class="forecast-sub"><?php echo knots_to_beaufort($f['wind_knots']); ?> Bft</div>
+                        <div class="forecast-line forecast-rain"><?php echo $f['precipitation']; ?> mm</div>
+                        <?php if ($f['probability'] !== null): ?>
+                        <div class="forecast-sub"><?php echo (int)$f['probability']; ?>%</div>
+                        <?php endif; ?>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
 
         <?php endif; ?>
