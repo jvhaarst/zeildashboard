@@ -133,6 +133,18 @@ function get_sailing_conditions($wind_knots, $current_knots) {
     return $conditions;
 }
 
+// Converteer windsnelheid in knopen naar windkracht (Beaufort 0-12)
+function knots_to_beaufort($knots) {
+    $lower_bounds = [1, 4, 7, 11, 17, 22, 28, 34, 41, 48, 56, 64];
+    $force = 0;
+    foreach ($lower_bounds as $index => $min_knots) {
+        if ($knots >= $min_knots) {
+            $force = $index + 1;
+        }
+    }
+    return $force;
+}
+
 $conditions = null;
 if ($wind && $current_speed && $temperature) {
     $conditions = get_sailing_conditions($wind['speed_knots'], $current_speed['knots']);
@@ -387,8 +399,8 @@ $last_update = date('Y-m-d H:i:s');
 
                 <div class="metric">
                     <div class="metric-label">Windsnelheid</div>
-                    <div class="metric-value"><?php echo $wind['speed_knots']; ?> <span style="font-size: 0.6em;">knopen</span></div>
-                    <div class="metric-secondary"><?php echo $wind['speed_kmh']; ?> km/h</div>
+                    <div class="metric-value"><?php echo $wind['speed_knots']; ?> <span style="font-size: 0.6em;">kn</span></div>
+                    <div class="metric-secondary">Windkracht <?php echo knots_to_beaufort($wind['speed_knots']); ?> Bft</div>
                 </div>
 
                 <div class="metric">
@@ -399,7 +411,7 @@ $last_update = date('Y-m-d H:i:s');
 
                 <div class="metric">
                     <div class="metric-label">Windvlagen</div>
-                    <div class="metric-value"><?php echo $wind['gust']; ?> <span style="font-size: 0.6em;">knopen</span></div>
+                    <div class="metric-value"><?php echo $wind['gust']; ?> <span style="font-size: 0.6em;">kn</span></div>
                 </div>
 
                 <div class="data-time">
@@ -419,7 +431,7 @@ $last_update = date('Y-m-d H:i:s');
 
                 <div class="metric">
                     <div class="metric-label">Stroomsnelheid</div>
-                    <div class="metric-value"><?php echo $current_speed['knots']; ?> <span style="font-size: 0.6em;">knopen</span></div>
+                    <div class="metric-value"><?php echo $current_speed['knots']; ?> <span style="font-size: 0.6em;">kn</span></div>
                     <div class="metric-secondary"><?php echo $current_speed['mps']; ?> m/s</div>
                 </div>
 

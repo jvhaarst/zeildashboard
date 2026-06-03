@@ -53,6 +53,20 @@ class Test_RSC_Display extends WP_UnitTestCase {
         $this->assertStringContainsString( 'm', $formatted );
     }
 
+    public function test_knots_to_beaufort() {
+        $this->assertEquals( 0, RSC_Display::knots_to_beaufort( 0.5 ) );
+        $this->assertEquals( 1, RSC_Display::knots_to_beaufort( 2 ) );
+        $this->assertEquals( 2, RSC_Display::knots_to_beaufort( 4 ) );
+        $this->assertEquals( 4, RSC_Display::knots_to_beaufort( 12 ) );
+        $this->assertEquals( 8, RSC_Display::knots_to_beaufort( 35 ) );
+        $this->assertEquals( 12, RSC_Display::knots_to_beaufort( 70 ) );
+    }
+
+    public function test_wind_renders_beaufort() {
+        $output = RSC_Display::render_shortcode( array() );
+        $this->assertStringContainsString( 'Bft', $output );
+    }
+
     public function test_shortcode_output_contains_css_class() {
         $output = RSC_Display::render_shortcode( array() );
         $this->assertStringContainsString( 'class=', $output );

@@ -93,13 +93,31 @@ class RSC_Display {
     private static function render_wind( $wind ) {
         $direction = isset( $wind['direction'] ) ? esc_html( $wind['direction'] ) : '—';
         $speed     = isset( $wind['speed'] ) ? esc_html( $wind['speed'] ) : '—';
-        $gust      = isset( $wind['gust'] ) ? esc_html( $wind['gust'] ) : '—';
+        $beaufort  = isset( $wind['speed'] ) ? esc_html( self::knots_to_beaufort( $wind['speed'] ) ) : '—';
 
         return '<div class="rsc-condition">
             <div class="rsc-label">' . esc_html__( 'Wind', self::TEXT_DOMAIN ) . '</div>
             <div class="rsc-value">' . $speed . ' kn ' . $direction . '</div>
-            <div class="rsc-sub">' . esc_html__( 'Windvlagen:', self::TEXT_DOMAIN ) . ' ' . $gust . ' kn</div>
+            <div class="rsc-sub">' . esc_html__( 'Windkracht:', self::TEXT_DOMAIN ) . ' ' . $beaufort . ' Bft</div>
         </div>';
+    }
+
+    /**
+     * Convert a sustained wind speed in knots to the Beaufort wind-force scale.
+     *
+     * @param float $knots Sustained wind speed in knots.
+     * @return int Beaufort force (0-12).
+     */
+    public static function knots_to_beaufort( $knots ) {
+        // Lower bound (in knots) of Beaufort forces 1 through 12.
+        $lower_bounds = array( 1, 4, 7, 11, 17, 22, 28, 34, 41, 48, 56, 64 );
+        $force        = 0;
+        foreach ( $lower_bounds as $index => $min_knots ) {
+            if ( $knots >= $min_knots ) {
+                $force = $index + 1;
+            }
+        }
+        return $force;
     }
 
     /**
