@@ -4,11 +4,13 @@ A WordPress plugin that displays real-time sailing conditions for the Rhine Rive
 
 ## Features
 
-- **Current Conditions:** Wind speed, direction, gusts; water level; current flow
-- **Forecasts:** Wind forecast for next 6 hours; water level trend
+- **Current Conditions:** Real wind speed/direction; water level; current speed; water temperature
+- **Real Data:** Wind from Open-Meteo; water measurements from Rijkswaterstaat DDAPI
+- **Sailing Assessment:** Integrated wind + water analysis with sailing recommendations
 - **Auto-Update:** Data refreshes automatically every 15-30 minutes
 - **Resilient:** Gracefully handles API downtime with cached data
 - **Responsive:** Works on desktop, tablet, and mobile
+- **Dutch Interface:** Full Dutch localization for Dutch sailing community
 
 ## Installation
 
@@ -21,8 +23,12 @@ A WordPress plugin that displays real-time sailing conditions for the Rhine Rive
 
 ## Data Sources
 
-- **Weather:** KNMI (Royal Netherlands Meteorological Institute)
-- **Water Data:** Rijkswaterstaat (Dutch water authority)
+- **Weather (Wind):** Open-Meteo API (free, no authentication)
+- **Water Data:** Rijkswaterstaat DDAPI (Driel boven location)
+  - Water height (Waterhoogte) - meters NAP
+  - Current speed (Stroomsnelheid) - knots/m/s
+  - Water temperature (Temperatuur) - °C
+  - Other available: pH, water clarity, discharge, saturation
 
 ## Technical Details
 
@@ -33,10 +39,16 @@ A WordPress plugin that displays real-time sailing conditions for the Rhine Rive
 - Renders as a responsive dashboard widget
 
 ### Classes
-- `RSC_Fetcher` – Handles API calls to KNMI and Rijkswaterstaat
-- `RSC_Validator` – Validates API response data
-- `RSC_Cache` – Wraps WordPress options for data storage
-- `RSC_Display` – Renders the shortcode
+- `RSC_Fetcher` – Handles API calls to Open-Meteo and Rijkswaterstaat DDAPI
+  - `fetch_knmi_wind()` – Current wind from Open-Meteo
+  - `fetch_rijkswaterstaat_water_level()` – Water height (WATHTE) from RWS
+  - `fetch_rijkswaterstaat_current_speed()` – Current speed (STROOMSHD) from RWS
+  - `fetch_rijkswaterstaat_temperature()` – Water temperature (T) from RWS
+  - `fetch_knmi_wind_forecast()` – Wind forecast from Open-Meteo
+  - `fetch_rijkswaterstaat_water_forecast()` – Water forecast (precipitation-based)
+- `RSC_Validator` – Validates API response data and measurement values
+- `RSC_Cache` – Wraps WordPress options for data storage with timestamps
+- `RSC_Display` – Renders the shortcode with sailing conditions assessment
 
 ### Caching Strategy
 - Current conditions: Cached for 30 minutes (fetched every 15 min)
