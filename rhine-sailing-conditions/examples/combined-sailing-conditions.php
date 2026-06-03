@@ -191,6 +191,9 @@ $last_update = date('Y-m-d H:i:s');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
     <title><?php echo htmlspecialchars( t( 'Rhine Sailing Conditions' ) . ' - ' . t( 'Live Dashboard' ) ); ?></title>
     <style>
         * {
@@ -200,8 +203,8 @@ $last_update = date('Y-m-d H:i:s');
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: 'Open Sans', Arial, sans-serif;
+            background: linear-gradient(135deg, #222e65 0%, #326bff 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -250,7 +253,7 @@ $last_update = date('Y-m-d H:i:s');
         }
 
         .card h2 {
-            color: #1e3c72;
+            color: #222e65;
             margin-bottom: 20px;
             font-size: 1.3em;
             display: flex;
@@ -273,7 +276,7 @@ $last_update = date('Y-m-d H:i:s');
         .metric-value {
             font-size: 2.2em;
             font-weight: bold;
-            color: #1e3c72;
+            color: #222e65;
         }
 
         .metric-secondary {
@@ -287,7 +290,7 @@ $last_update = date('Y-m-d H:i:s');
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #326bff 0%, #222e65 100%);
             color: white;
             display: flex;
             align-items: center;
@@ -299,7 +302,7 @@ $last_update = date('Y-m-d H:i:s');
 
         .recommendations-card {
             grid-column: 1 / -1;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #326bff 0%, #222e65 100%);
             color: white;
         }
 
@@ -370,7 +373,7 @@ $last_update = date('Y-m-d H:i:s');
         }
 
         .refresh-btn {
-            background: #667eea;
+            background: #326bff;
             color: white;
             border: none;
             padding: 12px 30px;
@@ -382,7 +385,7 @@ $last_update = date('Y-m-d H:i:s');
         }
 
         .refresh-btn:hover {
-            background: #764ba2;
+            background: #222e65;
         }
 
         .comparison {
@@ -396,7 +399,7 @@ $last_update = date('Y-m-d H:i:s');
             background: #f9f9f9;
             padding: 12px;
             border-radius: 8px;
-            border-left: 3px solid #667eea;
+            border-left: 3px solid #326bff;
         }
 
         .comparison-label {
@@ -408,7 +411,7 @@ $last_update = date('Y-m-d H:i:s');
         .comparison-value {
             font-size: 1.3em;
             font-weight: bold;
-            color: #1e3c72;
+            color: #222e65;
         }
 
         .forecast-card {
@@ -428,13 +431,13 @@ $last_update = date('Y-m-d H:i:s');
             text-align: center;
             background: #f9f9f9;
             border-radius: 8px;
-            border-top: 3px solid #667eea;
+            border-top: 3px solid #326bff;
             padding: 12px 8px;
         }
 
         .forecast-hour {
             font-weight: bold;
-            color: #1e3c72;
+            color: #222e65;
             margin-bottom: 8px;
         }
 
@@ -450,7 +453,7 @@ $last_update = date('Y-m-d H:i:s');
         }
 
         .forecast-rain {
-            color: #2a5298;
+            color: #326bff;
             font-weight: bold;
         }
     </style>

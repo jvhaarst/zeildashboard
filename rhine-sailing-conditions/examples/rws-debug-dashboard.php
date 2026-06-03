@@ -81,6 +81,9 @@ if ($waterhoogte && $waterhoogte['time']) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
     <title><?php echo htmlspecialchars( t( 'Rhine Water Conditions' ) ); ?></title>
     <style>
         * {
@@ -90,8 +93,8 @@ if ($waterhoogte && $waterhoogte['time']) {
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Open Sans', Arial, sans-serif;
+            background: linear-gradient(135deg, #326bff 0%, #222e65 100%);
             min-height: 100vh;
             padding: 20px;
             display: flex;
@@ -111,7 +114,7 @@ if ($waterhoogte && $waterhoogte['time']) {
         header {
             text-align: center;
             margin-bottom: 40px;
-            border-bottom: 3px solid #667eea;
+            border-bottom: 3px solid #326bff;
             padding-bottom: 20px;
         }
 
@@ -134,7 +137,7 @@ if ($waterhoogte && $waterhoogte['time']) {
         }
 
         .last-update {
-            color: #667eea;
+            color: #326bff;
             font-size: 0.95em;
             margin-top: 15px;
         }
@@ -147,7 +150,7 @@ if ($waterhoogte && $waterhoogte['time']) {
         }
 
         .metric-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #326bff 0%, #222e65 100%);
             border-radius: 12px;
             padding: 30px;
             color: white;
@@ -247,7 +250,7 @@ if ($waterhoogte && $waterhoogte['time']) {
         }
 
         .refresh-btn {
-            background: #667eea;
+            background: #326bff;
             color: white;
             border: none;
             padding: 12px 30px;
@@ -259,7 +262,7 @@ if ($waterhoogte && $waterhoogte['time']) {
         }
 
         .refresh-btn:hover {
-            background: #764ba2;
+            background: #222e65;
         }
 
         .error {
