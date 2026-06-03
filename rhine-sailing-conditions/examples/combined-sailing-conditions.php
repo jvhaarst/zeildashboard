@@ -193,7 +193,9 @@ $last_update = date('Y-m-d H:i:s');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <!-- Body: Open Sans (as on peterhensen.nl). Headings: the site uses the
+         commercial font "Panton"; Montserrat is a free geometric stand-in. -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,700;1,800&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <title><?php echo htmlspecialchars( t( 'Rhine Sailing Conditions' ) . ' - ' . t( 'Live Dashboard' ) ); ?></title>
     <style>
         * {
@@ -204,7 +206,8 @@ $last_update = date('Y-m-d H:i:s');
 
         body {
             font-family: 'Open Sans', Arial, sans-serif;
-            background: linear-gradient(135deg, #222e65 0%, #326bff 100%);
+            background: #eef1f7;
+            color: #333;
             min-height: 100vh;
             padding: 20px;
         }
@@ -216,20 +219,34 @@ $last_update = date('Y-m-d H:i:s');
 
         header {
             text-align: center;
-            color: white;
+            color: #222e65;
             margin-bottom: 30px;
             padding: 30px 0;
         }
 
         h1 {
+            font-family: 'Montserrat', 'Open Sans', Arial, sans-serif;
+            font-style: italic;
+            font-weight: 800;
             font-size: 3em;
+            color: #222e65;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        h1::after {
+            content: "";
+            display: block;
+            width: 80px;
+            height: 5px;
+            background: #f4d011;
+            border-radius: 3px;
+            margin: 14px auto 0;
         }
 
         .location {
             font-size: 1.2em;
-            opacity: 0.9;
+            color: #4f5883;
+            font-weight: 600;
         }
 
         .grid {
@@ -253,6 +270,9 @@ $last_update = date('Y-m-d H:i:s');
         }
 
         .card h2 {
+            font-family: 'Montserrat', 'Open Sans', Arial, sans-serif;
+            font-style: italic;
+            font-weight: 700;
             color: #222e65;
             margin-bottom: 20px;
             font-size: 1.3em;
@@ -431,7 +451,7 @@ $last_update = date('Y-m-d H:i:s');
             text-align: center;
             background: #f9f9f9;
             border-radius: 8px;
-            border-top: 3px solid #326bff;
+            border-top: 3px solid #f4d011;
             padding: 12px 8px;
         }
 

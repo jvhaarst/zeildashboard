@@ -83,7 +83,9 @@ if ($waterhoogte && $waterhoogte['time']) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <!-- Body: Open Sans. Headings: site uses commercial "Panton"; Montserrat
+         is a free geometric stand-in. -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,700;1,800&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <title><?php echo htmlspecialchars( t( 'Rhine Water Conditions' ) ); ?></title>
     <style>
         * {
@@ -94,7 +96,8 @@ if ($waterhoogte && $waterhoogte['time']) {
 
         body {
             font-family: 'Open Sans', Arial, sans-serif;
-            background: linear-gradient(135deg, #326bff 0%, #222e65 100%);
+            background: #eef1f7;
+            color: #333;
             min-height: 100vh;
             padding: 20px;
             display: flex;
@@ -119,7 +122,10 @@ if ($waterhoogte && $waterhoogte['time']) {
         }
 
         h1 {
-            color: #333;
+            font-family: 'Montserrat', 'Open Sans', Arial, sans-serif;
+            font-style: italic;
+            font-weight: 800;
+            color: #222e65;
             font-size: 2.5em;
             margin-bottom: 10px;
         }
