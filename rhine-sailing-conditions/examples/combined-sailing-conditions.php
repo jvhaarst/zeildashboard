@@ -321,13 +321,34 @@ $last_update = date('Y-m-d H:i:s');
         }
 
         .recommendations-card {
-            grid-column: 1 / -1;
             background: linear-gradient(135deg, #326bff 0%, #222e65 100%);
             color: white;
+            border-radius: 15px;
+            padding: 28px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(34,46,101,0.25);
         }
 
         .recommendations-card h2 {
+            font-family: 'Montserrat', 'Open Sans', Arial, sans-serif;
+            font-style: italic;
+            font-weight: 800;
+            font-size: 1.5em;
             color: white;
+            margin-bottom: 14px;
+        }
+
+        .reco-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .reco-hint {
+            margin-top: 14px;
+            opacity: 0.9;
+            font-size: 0.9em;
         }
 
         .recommendation-item {
@@ -345,11 +366,11 @@ $last_update = date('Y-m-d H:i:s');
 
         .status-badge {
             display: inline-block;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: 600;
-            margin: 10px 0;
+            padding: 11px 20px;
+            border-radius: 24px;
+            font-size: 1.1em;
+            font-weight: 700;
+            margin: 0;
         }
 
         .status-good {
@@ -369,8 +390,7 @@ $last_update = date('Y-m-d H:i:s');
 
         .footer {
             text-align: center;
-            color: white;
-            opacity: 0.8;
+            color: #4f5883;
             margin-top: 30px;
             padding: 20px;
         }
@@ -409,27 +429,31 @@ $last_update = date('Y-m-d H:i:s');
         }
 
         .comparison {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 0;
         }
 
         .comparison-item {
-            background: #f9f9f9;
-            padding: 12px;
-            border-radius: 8px;
-            border-left: 3px solid #326bff;
+            background: #fff;
+            padding: 10px 16px;
+            border-radius: 10px;
+            border-left: 4px solid #f4d011;
+            display: inline-flex;
+            align-items: baseline;
+            gap: 8px;
         }
 
         .comparison-label {
             color: #666;
-            font-size: 0.9em;
-            margin-bottom: 5px;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .comparison-value {
-            font-size: 1.3em;
+            font-size: 1.15em;
             font-weight: bold;
             color: #222e65;
         }
@@ -491,6 +515,36 @@ $last_update = date('Y-m-d H:i:s');
                 <?php echo htmlspecialchars( t( 'Unable to fetch real-time data. Please check your internet connection.' ) ); ?>
             </div>
         <?php else: ?>
+
+        <!-- Sailing recommendation: the eyecatcher, shown first for info at a glance -->
+        <div class="recommendations-card">
+            <h2><?php echo htmlspecialchars( t( 'Sailing recommendation' ) ); ?></h2>
+
+            <?php $badge_class = ( 'good' === $conditions['status'] ) ? 'status-good' : 'status-caution'; ?>
+            <div class="reco-row">
+                <span class="status-badge <?php echo $badge_class; ?>">
+                    <?php echo htmlspecialchars( t( $conditions['recommendation'] ) ); ?>
+                </span>
+                <div class="comparison">
+                    <div class="comparison-item">
+                        <span class="comparison-label"><?php echo htmlspecialchars( t( 'Wind for sailing' ) ); ?></span>
+                        <span class="comparison-value"><?php
+                            if ($wind['speed_knots'] < 6) { echo htmlspecialchars( t( 'Too weak' ) ); }
+                            elseif ($wind['speed_knots'] < 15) { echo htmlspecialchars( t( 'Good' ) ); }
+                            else { echo htmlspecialchars( t( 'Too strong' ) ); }
+                        ?></span>
+                    </div>
+                    <div class="comparison-item">
+                        <span class="comparison-label"><?php echo htmlspecialchars( t( 'Current speed' ) ); ?></span>
+                        <span class="comparison-value"><?php
+                            echo ($current_speed['knots'] < 2.5) ? htmlspecialchars( t( 'Safe' ) ) : htmlspecialchars( t( 'Strong' ) );
+                        ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <p class="reco-hint"><?php echo htmlspecialchars( t( 'Ideal conditions: 6-15 knots wind + current under 2.5 knots' ) ); ?></p>
+        </div>
 
         <div class="grid">
             <!-- Wind Card -->
@@ -569,51 +623,6 @@ $last_update = date('Y-m-d H:i:s');
                 <div class="data-time">
                     <?php echo htmlspecialchars( t( 'Last checked' ) ); ?>: <?php echo $last_update; ?>
                 </div>
-            </div>
-
-            <!-- Recommendations Card -->
-            <div class="recommendations-card">
-                <h2><?php echo htmlspecialchars( t( 'Sailing recommendation' ) ); ?></h2>
-
-                <?php
-                $badge_class = ( 'good' === $conditions['status'] ) ? 'status-good' : 'status-caution';
-                ?>
-                <span class="status-badge <?php echo $badge_class; ?>">
-                    <?php echo htmlspecialchars( t( $conditions['recommendation'] ) ); ?>
-                </span>
-
-                <div class="comparison">
-                    <div class="comparison-item">
-                        <div class="comparison-label"><?php echo htmlspecialchars( t( 'Wind for sailing' ) ); ?></div>
-                        <div class="comparison-value">
-                            <?php
-                            if ($wind['speed_knots'] < 6) {
-                                echo htmlspecialchars( t( 'Too weak' ) );
-                            } elseif ($wind['speed_knots'] < 15) {
-                                echo htmlspecialchars( t( 'Good' ) );
-                            } else {
-                                echo htmlspecialchars( t( 'Too strong' ) );
-                            }
-                            ?>
-                        </div>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-label"><?php echo htmlspecialchars( t( 'Current speed' ) ); ?></div>
-                        <div class="comparison-value">
-                            <?php
-                            if ($current_speed['knots'] < 2.5) {
-                                echo htmlspecialchars( t( 'Safe' ) );
-                            } else {
-                                echo htmlspecialchars( t( 'Strong' ) );
-                            }
-                            ?>
-                        </div>
-                    </div>
-                </div>
-
-                <p style="margin-top: 15px; opacity: 0.9;">
-                    <?php echo htmlspecialchars( t( 'Ideal conditions: 6-15 knots wind + current under 2.5 knots' ) ); ?>
-                </p>
             </div>
 
             <!-- Forecast Card -->
