@@ -1,8 +1,13 @@
 <?php
 /**
- * Gecombineerd Rijn Zeilomstandigheden Dashboard
- * Toont real-time wind- en watergegevens geïntegreerd
+ * Combined Rhine Sailing Conditions dashboard.
+ * Shows real-time wind and water data together.
+ *
+ * UI language defaults to Dutch; set RSC_LANG=fy (etc.) to switch.
+ * See lang/i18n.php.
  */
+
+require __DIR__ . '/lang/i18n.php';
 
 // Rhine location
 $location = [
@@ -103,31 +108,37 @@ if (isset($rws_data['WaarnemingenLijst'])) {
 function get_sailing_conditions($wind_knots, $current_knots) {
     $conditions = [];
 
-    // Windtoetsing
-    if ($wind_knots < 3) $conditions['wind'] = ['level' => 'Windstil', 'description' => 'Geen wind'];
-    elseif ($wind_knots < 6) $conditions['wind'] = ['level' => 'Licht', 'description' => 'Lichte bries'];
-    elseif ($wind_knots < 10) $conditions['wind'] = ['level' => 'Matig', 'description' => 'Fijne bries'];
-    elseif ($wind_knots < 15) $conditions['wind'] = ['level' => 'Sterk', 'description' => 'Sterke wind'];
-    else $conditions['wind'] = ['level' => 'Zeer Sterk', 'description' => 'Gevaarlijke omstandigheden'];
+    // Wind assessment (English keys; translated at output via t()).
+    if ($wind_knots < 3) $conditions['wind'] = ['level' => 'Calm', 'description' => 'No wind'];
+    elseif ($wind_knots < 6) $conditions['wind'] = ['level' => 'Light', 'description' => 'Light breeze'];
+    elseif ($wind_knots < 10) $conditions['wind'] = ['level' => 'Moderate', 'description' => 'Nice breeze'];
+    elseif ($wind_knots < 15) $conditions['wind'] = ['level' => 'Strong', 'description' => 'Strong wind'];
+    else $conditions['wind'] = ['level' => 'Very strong', 'description' => 'Dangerous conditions'];
 
-    // Stromingstoetsing
-    if ($current_knots < 0.5) $conditions['water'] = ['level' => 'Zwak', 'description' => 'Zeer zwakke stroming'];
-    elseif ($current_knots < 1.0) $conditions['water'] = ['level' => 'Licht', 'description' => 'Lichte stroming'];
-    elseif ($current_knots < 2.0) $conditions['water'] = ['level' => 'Matig', 'description' => 'Gemiddelde stroming'];
-    elseif ($current_knots < 3.0) $conditions['water'] = ['level' => 'Sterk', 'description' => 'Sterke stroming'];
-    else $conditions['water'] = ['level' => 'Zeer Sterk', 'description' => 'Zeer sterke stroming'];
+    // Current assessment.
+    if ($current_knots < 0.5) $conditions['water'] = ['level' => 'Weak', 'description' => 'Very weak current'];
+    elseif ($current_knots < 1.0) $conditions['water'] = ['level' => 'Light', 'description' => 'Light current'];
+    elseif ($current_knots < 2.0) $conditions['water'] = ['level' => 'Moderate', 'description' => 'Average current'];
+    elseif ($current_knots < 3.0) $conditions['water'] = ['level' => 'Strong', 'description' => 'Strong current'];
+    else $conditions['water'] = ['level' => 'Very strong', 'description' => 'Very strong current'];
 
-    // Algehele aanbeveling
+    // Overall recommendation. 'status' drives the badge colour and is
+    // language-independent; 'recommendation' is an English key for t().
     if ($wind_knots >= 6 && $wind_knots < 15 && $current_knots < 2.5) {
-        $conditions['recommendation'] = 'Prima omstandigheden voor zeilen';
+        $conditions['status'] = 'good';
+        $conditions['recommendation'] = 'Good conditions for sailing';
     } elseif ($wind_knots < 6) {
-        $conditions['recommendation'] = 'Onvoldoende wind voor goed zeilen';
+        $conditions['status'] = 'caution';
+        $conditions['recommendation'] = 'Insufficient wind for good sailing';
     } elseif ($wind_knots >= 15) {
-        $conditions['recommendation'] = 'Wind te sterk - voorzichtigheid geadviseerd';
+        $conditions['status'] = 'caution';
+        $conditions['recommendation'] = 'Wind too strong - caution advised';
     } elseif ($current_knots >= 2.5) {
-        $conditions['recommendation'] = 'Stroming te sterk - voorzichtigheid geadviseerd';
+        $conditions['status'] = 'caution';
+        $conditions['recommendation'] = 'Current too strong - caution advised';
     } else {
-        $conditions['recommendation'] = 'Controleer omstandigheden voor zeilen';
+        $conditions['status'] = 'caution';
+        $conditions['recommendation'] = 'Check conditions before sailing';
     }
 
     return $conditions;
@@ -157,7 +168,7 @@ $last_update = date('Y-m-d H:i:s');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rijn Zeilomstandigheden - Live Dashboard</title>
+    <title><?php echo htmlspecialchars( t( 'Rhine Sailing Conditions' ) . ' - ' . t( 'Live Dashboard' ) ); ?></title>
     <style>
         * {
             margin: 0;
@@ -381,133 +392,130 @@ $last_update = date('Y-m-d H:i:s');
 <body>
     <div class="container">
         <header>
-            <h1>Rijn Zeilomstandigheden</h1>
+            <h1><?php echo htmlspecialchars( t( 'Rhine Sailing Conditions' ) ); ?></h1>
             <div class="location"><?php echo htmlspecialchars($location['name']); ?></div>
-            <small style="opacity: 0.7;">Real-time gegevens van Open-Meteo en Rijkswaterstaat</small>
+            <small style="opacity: 0.7;"><?php echo htmlspecialchars( t( 'Real-time data from Open-Meteo and Rijkswaterstaat' ) ); ?></small>
         </header>
 
         <?php if (!$wind || !$water || !$current_speed || !$temperature): ?>
             <div class="error">
-                Kan real-time gegevens niet ophalen. Controleer uw internetverbinding.
+                <?php echo htmlspecialchars( t( 'Unable to fetch real-time data. Please check your internet connection.' ) ); ?>
             </div>
         <?php else: ?>
 
         <div class="grid">
             <!-- Wind Card -->
             <div class="card">
-                <h2>Windcondities</h2>
+                <h2><?php echo htmlspecialchars( t( 'Wind conditions' ) ); ?></h2>
 
                 <div class="metric">
-                    <div class="metric-label">Windsnelheid</div>
+                    <div class="metric-label"><?php echo htmlspecialchars( t( 'Wind speed' ) ); ?></div>
                     <div class="metric-value"><?php echo $wind['speed_knots']; ?> <span style="font-size: 0.6em;">kn</span></div>
-                    <div class="metric-secondary">Windkracht <?php echo knots_to_beaufort($wind['speed_knots']); ?> Bft</div>
+                    <div class="metric-secondary"><?php echo htmlspecialchars( t( 'Wind force' ) ); ?> <?php echo knots_to_beaufort($wind['speed_knots']); ?> Bft</div>
                 </div>
 
                 <div class="metric">
-                    <div class="metric-label">Richting</div>
+                    <div class="metric-label"><?php echo htmlspecialchars( t( 'Direction' ) ); ?></div>
                     <div class="wind-direction"><?php echo htmlspecialchars($wind['direction']); ?></div>
-                    <div class="metric-secondary"><?php echo $wind['direction_deg']; ?>° t.o.v. Noorden</div>
+                    <div class="metric-secondary"><?php echo $wind['direction_deg']; ?>° <?php echo htmlspecialchars( t( 'relative to North' ) ); ?></div>
                 </div>
 
                 <div class="metric">
-                    <div class="metric-label">Windvlagen</div>
+                    <div class="metric-label"><?php echo htmlspecialchars( t( 'Wind gusts' ) ); ?></div>
                     <div class="metric-value"><?php echo $wind['gust']; ?> <span style="font-size: 0.6em;">kn</span></div>
                 </div>
 
                 <div class="data-time">
-                    Bron: Open-Meteo API
+                    <?php echo htmlspecialchars( t( 'Source: Open-Meteo API' ) ); ?>
                 </div>
             </div>
 
             <!-- Water Card -->
             <div class="card">
-                <h2>Watercondities</h2>
+                <h2><?php echo htmlspecialchars( t( 'Water conditions' ) ); ?></h2>
 
                 <div class="metric">
-                    <div class="metric-label">Waterstand</div>
+                    <div class="metric-label"><?php echo htmlspecialchars( t( 'Water level' ) ); ?></div>
                     <div class="metric-value"><?php echo $water['meters']; ?> <span style="font-size: 0.6em;">m NAP</span></div>
                     <div class="metric-secondary"><?php echo $water['cm']; ?> cm</div>
                 </div>
 
                 <div class="metric">
-                    <div class="metric-label">Stroomsnelheid</div>
+                    <div class="metric-label"><?php echo htmlspecialchars( t( 'Current speed' ) ); ?></div>
                     <div class="metric-value"><?php echo $current_speed['knots']; ?> <span style="font-size: 0.6em;">kn</span></div>
                     <div class="metric-secondary"><?php echo $current_speed['mps']; ?> m/s</div>
                 </div>
 
                 <div class="metric">
-                    <div class="metric-label">Watertemperatuur</div>
+                    <div class="metric-label"><?php echo htmlspecialchars( t( 'Water temperature' ) ); ?></div>
                     <div class="metric-value"><?php echo $temperature['celsius']; ?> <span style="font-size: 0.6em;">°C</span></div>
                 </div>
 
                 <div class="data-time">
-                    Bron: Rijkswaterstaat DDAPI<br>
-                    Locatie: driel.boven
+                    <?php echo htmlspecialchars( t( 'Source: Rijkswaterstaat DDAPI' ) ); ?><br>
+                    <?php echo htmlspecialchars( t( 'Location' ) ); ?>: driel.boven
                 </div>
             </div>
 
             <!-- Summary Card -->
             <div class="card">
-                <h2>Huidige Beoordeling</h2>
+                <h2><?php echo htmlspecialchars( t( 'Current assessment' ) ); ?></h2>
 
                 <div class="metric">
-                    <div class="metric-label">Windniveau</div>
+                    <div class="metric-label"><?php echo htmlspecialchars( t( 'Wind level' ) ); ?></div>
                     <div class="metric-value" style="font-size: 1.6em;">
-                        <?php echo htmlspecialchars($conditions['wind']['level']); ?>
+                        <?php echo htmlspecialchars( t( $conditions['wind']['level'] ) ); ?>
                     </div>
-                    <div class="metric-secondary"><?php echo htmlspecialchars($conditions['wind']['description']); ?></div>
+                    <div class="metric-secondary"><?php echo htmlspecialchars( t( $conditions['wind']['description'] ) ); ?></div>
                 </div>
 
                 <div class="metric">
-                    <div class="metric-label">Waterstroming</div>
+                    <div class="metric-label"><?php echo htmlspecialchars( t( 'Water current' ) ); ?></div>
                     <div class="metric-value" style="font-size: 1.6em;">
-                        <?php echo htmlspecialchars($conditions['water']['level']); ?>
+                        <?php echo htmlspecialchars( t( $conditions['water']['level'] ) ); ?>
                     </div>
-                    <div class="metric-secondary"><?php echo htmlspecialchars($conditions['water']['description']); ?></div>
+                    <div class="metric-secondary"><?php echo htmlspecialchars( t( $conditions['water']['description'] ) ); ?></div>
                 </div>
 
                 <div class="data-time">
-                    Laatst gecontroleerd: <?php echo $last_update; ?>
+                    <?php echo htmlspecialchars( t( 'Last checked' ) ); ?>: <?php echo $last_update; ?>
                 </div>
             </div>
 
             <!-- Recommendations Card -->
             <div class="recommendations-card">
-                <h2>Zeilaanbeveling</h2>
+                <h2><?php echo htmlspecialchars( t( 'Sailing recommendation' ) ); ?></h2>
 
                 <?php
-                if (strpos($conditions['recommendation'], 'Prima') === 0) {
-                    echo '<span class="status-badge status-good">';
-                } else {
-                    echo '<span class="status-badge status-caution">';
-                }
+                $badge_class = ( 'good' === $conditions['status'] ) ? 'status-good' : 'status-caution';
                 ?>
-                    <?php echo htmlspecialchars($conditions['recommendation']); ?>
+                <span class="status-badge <?php echo $badge_class; ?>">
+                    <?php echo htmlspecialchars( t( $conditions['recommendation'] ) ); ?>
                 </span>
 
                 <div class="comparison">
                     <div class="comparison-item">
-                        <div class="comparison-label">Wind voor Zeilen</div>
+                        <div class="comparison-label"><?php echo htmlspecialchars( t( 'Wind for sailing' ) ); ?></div>
                         <div class="comparison-value">
                             <?php
                             if ($wind['speed_knots'] < 6) {
-                                echo 'Te Zwak';
+                                echo htmlspecialchars( t( 'Too weak' ) );
                             } elseif ($wind['speed_knots'] < 15) {
-                                echo 'Goed';
+                                echo htmlspecialchars( t( 'Good' ) );
                             } else {
-                                echo 'Te Sterk';
+                                echo htmlspecialchars( t( 'Too strong' ) );
                             }
                             ?>
                         </div>
                     </div>
                     <div class="comparison-item">
-                        <div class="comparison-label">Stroomsnelheid</div>
+                        <div class="comparison-label"><?php echo htmlspecialchars( t( 'Current speed' ) ); ?></div>
                         <div class="comparison-value">
                             <?php
                             if ($current_speed['knots'] < 2.5) {
-                                echo 'Veilig';
+                                echo htmlspecialchars( t( 'Safe' ) );
                             } else {
-                                echo 'Sterk';
+                                echo htmlspecialchars( t( 'Strong' ) );
                             }
                             ?>
                         </div>
@@ -515,7 +523,7 @@ $last_update = date('Y-m-d H:i:s');
                 </div>
 
                 <p style="margin-top: 15px; opacity: 0.9;">
-                    Ideale omstandigheden: 6-15 knopen wind + stroming onder 2,5 knopen
+                    <?php echo htmlspecialchars( t( 'Ideal conditions: 6-15 knots wind + current under 2.5 knots' ) ); ?>
                 </p>
             </div>
         </div>
@@ -523,13 +531,13 @@ $last_update = date('Y-m-d H:i:s');
         <?php endif; ?>
 
         <div style="text-align: center; margin-top: 30px;">
-            <button class="refresh-btn" onclick="location.reload()">Nu Vernieuwen</button>
+            <button class="refresh-btn" onclick="location.reload()"><?php echo htmlspecialchars( t( 'Refresh now' ) ); ?></button>
         </div>
 
         <footer class="footer">
-            <p><strong>Gegevensbronnen:</strong> Open-Meteo (wind) + Rijkswaterstaat DDAPI (water)</p>
-            <p>Dit is een live dashboard met werkelijke omstandigheden bij Arnhem Nederrijn op de Rijn</p>
-            <p style="margin-top: 10px; opacity: 0.6;">Wordt elke 30 seconden bijgewerkt op bronservers • Pagina kan automatisch worden vernieuwd</p>
+            <p><strong><?php echo htmlspecialchars( t( 'Data sources:' ) ); ?></strong> Open-Meteo (wind) + Rijkswaterstaat DDAPI (water)</p>
+            <p><?php echo htmlspecialchars( t( 'This is a live dashboard showing actual conditions at Driel boven on the Rhine' ) ); ?></p>
+            <p style="margin-top: 10px; opacity: 0.6;"><?php echo htmlspecialchars( t( 'Updated every 30 seconds on source servers • Page can refresh automatically' ) ); ?></p>
         </footer>
     </div>
 </body>

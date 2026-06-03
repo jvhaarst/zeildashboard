@@ -30,7 +30,7 @@ class RSC_Display {
 
         // Check if we have any data
         if ( ! $wind && ! $water_level && ! $current_speed && ! $temperature ) {
-            return '<div class="rsc-error">' . esc_html__( 'Huidige omstandigheden niet beschikbaar. Probeer het later opnieuw.', self::TEXT_DOMAIN ) . '</div>';
+            return '<div class="rsc-error">' . esc_html__( 'Current conditions are unavailable. Please try again later.', self::TEXT_DOMAIN ) . '</div>';
         }
 
         // Build HTML output
@@ -38,7 +38,7 @@ class RSC_Display {
         $html .= self::render_header();
 
         if ( RSC_Cache::is_stale( 'current_wind', self::STALE_TTL ) ) {
-            $html .= '<div class="rsc-stale">' . esc_html__( 'Let op: deze gegevens zijn mogelijk verouderd.', self::TEXT_DOMAIN ) . '</div>';
+            $html .= '<div class="rsc-stale">' . esc_html__( 'Warning: this data may be outdated.', self::TEXT_DOMAIN ) . '</div>';
         }
 
         $html .= '<div class="rsc-container">';
@@ -79,8 +79,8 @@ class RSC_Display {
     private static function render_header() {
         $last_update = self::get_last_update_time();
         return '<div class="rsc-header">
-            <h3>' . esc_html__( 'Rijn Zeilomstandigheden', self::TEXT_DOMAIN ) . '</h3>
-            <p class="rsc-updated">' . esc_html__( 'Bijgewerkt', self::TEXT_DOMAIN ) . ' ' . esc_html( $last_update ) . '</p>
+            <h3>' . esc_html__( 'Rhine Sailing Conditions', self::TEXT_DOMAIN ) . '</h3>
+            <p class="rsc-updated">' . esc_html__( 'Updated', self::TEXT_DOMAIN ) . ' ' . esc_html( $last_update ) . '</p>
         </div>';
     }
 
@@ -98,7 +98,7 @@ class RSC_Display {
         return '<div class="rsc-condition">
             <div class="rsc-label">' . esc_html__( 'Wind', self::TEXT_DOMAIN ) . '</div>
             <div class="rsc-value">' . $speed . ' kn ' . $direction . '</div>
-            <div class="rsc-sub">' . esc_html__( 'Windkracht:', self::TEXT_DOMAIN ) . ' ' . $beaufort . ' Bft</div>
+            <div class="rsc-sub">' . esc_html__( 'Wind force:', self::TEXT_DOMAIN ) . ' ' . $beaufort . ' Bft</div>
         </div>';
     }
 
@@ -130,7 +130,7 @@ class RSC_Display {
         $level = isset( $water_level['level'] ) ? esc_html( $water_level['level'] ) : '—';
 
         return '<div class="rsc-condition">
-            <div class="rsc-label">' . esc_html__( 'Waterstand', self::TEXT_DOMAIN ) . '</div>
+            <div class="rsc-label">' . esc_html__( 'Water level', self::TEXT_DOMAIN ) . '</div>
             <div class="rsc-value">' . $level . ' m NAP</div>
         </div>';
     }
@@ -151,7 +151,7 @@ class RSC_Display {
         }
 
         return '<div class="rsc-condition">
-            <div class="rsc-label">' . esc_html__( 'Stroomsnelheid', self::TEXT_DOMAIN ) . '</div>
+            <div class="rsc-label">' . esc_html__( 'Current speed', self::TEXT_DOMAIN ) . '</div>
             <div class="rsc-value">' . $knots . ' kn</div>
             ' . $sub . '
         </div>';
@@ -167,7 +167,7 @@ class RSC_Display {
         $celsius = isset( $temperature['celsius'] ) ? esc_html( $temperature['celsius'] ) : '—';
 
         return '<div class="rsc-condition">
-            <div class="rsc-label">' . esc_html__( 'Watertemperatuur', self::TEXT_DOMAIN ) . '</div>
+            <div class="rsc-label">' . esc_html__( 'Water temperature', self::TEXT_DOMAIN ) . '</div>
             <div class="rsc-value">' . $celsius . ' °C</div>
         </div>';
     }
@@ -184,7 +184,7 @@ class RSC_Display {
         }
 
         $html  = '<div class="rsc-forecast-header">
-            <h4>' . esc_html__( 'Komende 6 uur', self::TEXT_DOMAIN ) . '</h4>
+            <h4>' . esc_html__( 'Next 6 hours', self::TEXT_DOMAIN ) . '</h4>
         </div>';
         $html .= '<div class="rsc-forecast-chart">';
 
@@ -230,19 +230,21 @@ class RSC_Display {
         $timestamp = RSC_Cache::get_timestamp( 'current_wind' );
 
         if ( $timestamp === 0 ) {
-            return __( 'nooit', self::TEXT_DOMAIN );
+            return __( 'never', self::TEXT_DOMAIN );
         }
 
         $diff = time() - $timestamp;
 
         if ( $diff < 60 ) {
-            return __( 'zojuist', self::TEXT_DOMAIN );
+            return __( 'just now', self::TEXT_DOMAIN );
         } elseif ( $diff < 3600 ) {
-            $minutes = floor( $diff / 60 );
-            return $minutes . ' ' . ( $minutes > 1 ? __( 'minuten geleden', self::TEXT_DOMAIN ) : __( 'minuut geleden', self::TEXT_DOMAIN ) );
+            $minutes = (int) floor( $diff / 60 );
+            /* translators: %d: number of minutes. */
+            return sprintf( _n( '%d minute ago', '%d minutes ago', $minutes, self::TEXT_DOMAIN ), $minutes );
         } else {
-            $hours = floor( $diff / 3600 );
-            return $hours . ' ' . ( $hours > 1 ? __( 'uur geleden', self::TEXT_DOMAIN ) : __( 'uur geleden', self::TEXT_DOMAIN ) );
+            $hours = (int) floor( $diff / 3600 );
+            /* translators: %d: number of hours. */
+            return sprintf( _n( '%d hour ago', '%d hours ago', $hours, self::TEXT_DOMAIN ), $hours );
         }
     }
 }

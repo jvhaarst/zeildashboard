@@ -3,7 +3,7 @@
  * Plugin Name: Rhine Sailing Conditions
  * Plugin URI: https://example.com
  * Description: Display real-time sailing conditions on the Rhine River
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Sailing Club
  * License: GPL2
  * Text Domain: rhine-sailing-conditions
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Define plugin paths, URLs, and version constants for use throughout the plugin.
 define( 'RSC_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'RSC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'RSC_PLUGIN_VERSION', '1.1.0' );
+define( 'RSC_PLUGIN_VERSION', '1.2.0' );
 
 // ============================================================================
 // Class Includes
@@ -34,7 +34,22 @@ require_once RSC_PLUGIN_PATH . 'includes/class-display.php';
 // ============================================================================
 // Translations
 // ============================================================================
-// Load the plugin text domain so interface strings can be translated.
+// Source strings are English; shipped translations live in /languages.
+// The plugin defaults its own UI to Dutch (nl_NL) regardless of the site
+// locale. To use another language (e.g. Frisian) drop in a matching
+// .mo file and override the locale via the 'rsc_locale' filter:
+//
+//     add_filter( 'rsc_locale', function () { return 'fy_NL'; } );
+//
+add_filter( 'plugin_locale', 'rsc_plugin_locale', 10, 2 );
+
+function rsc_plugin_locale( $locale, $domain ) {
+    if ( 'rhine-sailing-conditions' === $domain ) {
+        return apply_filters( 'rsc_locale', 'nl_NL' );
+    }
+    return $locale;
+}
+
 add_action( 'init', 'rsc_load_textdomain' );
 
 function rsc_load_textdomain() {

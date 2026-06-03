@@ -1,8 +1,13 @@
 <?php
 /**
  * RWS Water Data Debug Dashboard
- * Shows real Rhine water measurements from Rijkswaterstaat API
+ * Shows real Rhine water measurements from Rijkswaterstaat API.
+ *
+ * UI language defaults to Dutch; set RSC_LANG=fy (etc.) to switch.
+ * See lang/i18n.php.
  */
+
+require __DIR__ . '/lang/i18n.php';
 
 // Fetch latest data from RWS DDAPI
 $url = 'https://ddapi20-waterwebservices.rijkswaterstaat.nl/ONLINEWAARNEMINGENSERVICES/OphalenLaatsteWaarnemingen';
@@ -76,7 +81,7 @@ if ($waterhoogte && $waterhoogte['time']) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rhine Water Data - RWS Live</title>
+    <title><?php echo htmlspecialchars( t( 'Rhine Water Conditions' ) ); ?></title>
     <style>
         * {
             margin: 0;
@@ -270,47 +275,47 @@ if ($waterhoogte && $waterhoogte['time']) {
 <body>
     <div class="container">
         <header>
-            <h1>⛵ Rhine Water Conditions</h1>
-            <div class="location">Arnhem, Netherlands (Nederrijn)</div>
+            <h1><?php echo htmlspecialchars( t( 'Rhine Water Conditions' ) ); ?></h1>
+            <div class="location">Arnhem, Nederrijn</div>
             <div class="coords">51.975408°N, 5.912023°E</div>
-            <div class="last-update">Last updated: <strong><?php echo htmlspecialchars($last_update); ?></strong> (CET)</div>
+            <div class="last-update"><?php echo htmlspecialchars( t( 'Last updated' ) ); ?>: <strong><?php echo htmlspecialchars($last_update); ?></strong> (CET)</div>
         </header>
 
         <?php if (!$waterhoogte || !$debiet): ?>
             <div class="error">
-                ⚠️ Unable to fetch real-time data from RWS API. Check your internet connection or API availability.
+                <?php echo htmlspecialchars( t( 'Unable to fetch real-time data from RWS API. Check your internet connection or API availability.' ) ); ?>
             </div>
         <?php else: ?>
 
         <section class="metrics">
             <div class="metric-card">
-                <div class="metric-label">Water Height</div>
+                <div class="metric-label"><?php echo htmlspecialchars( t( 'Water Height' ) ); ?></div>
                 <div class="metric-value"><?php echo number_format($waterhoogte['meters'], 2); ?></div>
-                <div class="metric-unit">meters (NAP)</div>
+                <div class="metric-unit"><?php echo htmlspecialchars( t( 'meters (NAP)' ) ); ?></div>
                 <div class="metric-secondary">
                     <?php echo number_format($waterhoogte['cm'], 0); ?> cm
                 </div>
             </div>
 
             <div class="metric-card">
-                <div class="metric-label">Discharge Rate</div>
+                <div class="metric-label"><?php echo htmlspecialchars( t( 'Discharge Rate' ) ); ?></div>
                 <div class="metric-value"><?php echo number_format($debiet['value'], 1); ?></div>
                 <div class="metric-unit">m³/s</div>
                 <div class="metric-secondary">
-                    <?php echo htmlspecialchars($debiet['method']); ?> measurement
+                    <?php echo htmlspecialchars($debiet['method']); ?> <?php echo htmlspecialchars( t( 'measurement' ) ); ?>
                 </div>
             </div>
         </section>
 
         <section>
-            <h2 style="color: #333; margin-bottom: 20px; font-size: 1.3em;">All Measurements</h2>
+            <h2 style="color: #333; margin-bottom: 20px; font-size: 1.3em;"><?php echo htmlspecialchars( t( 'All Measurements' ) ); ?></h2>
             <table>
                 <thead>
                     <tr>
-                        <th>Type</th>
-                        <th>Value</th>
-                        <th>Method</th>
-                        <th>Timestamp</th>
+                        <th><?php echo htmlspecialchars( t( 'Type' ) ); ?></th>
+                        <th><?php echo htmlspecialchars( t( 'Value' ) ); ?></th>
+                        <th><?php echo htmlspecialchars( t( 'Method' ) ); ?></th>
+                        <th><?php echo htmlspecialchars( t( 'Timestamp' ) ); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -344,12 +349,12 @@ if ($waterhoogte && $waterhoogte['time']) {
         <?php endif; ?>
 
         <div style="text-align: center;">
-            <button class="refresh-btn" onclick="location.reload()">🔄 Refresh Data</button>
+            <button class="refresh-btn" onclick="location.reload()"><?php echo htmlspecialchars( t( 'Refresh Data' ) ); ?></button>
         </div>
 
         <footer class="footer">
-            <p>Data source: <strong>Rijkswaterstaat DDAPI</strong> (Dutch Ministry of Infrastructure)</p>
-            <p>Updated every 30 seconds on RWS servers • This dashboard refreshes on page load</p>
+            <p><?php echo htmlspecialchars( t( 'Data source:' ) ); ?> <strong>Rijkswaterstaat DDAPI</strong> <?php echo htmlspecialchars( t( '(Dutch Ministry of Infrastructure)' ) ); ?></p>
+            <p><?php echo htmlspecialchars( t( 'Updated every 30 seconds on RWS servers • This dashboard refreshes on page load' ) ); ?></p>
         </footer>
     </div>
 </body>

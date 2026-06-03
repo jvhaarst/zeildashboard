@@ -38,7 +38,8 @@ class Test_RSC_Display extends WP_UnitTestCase {
         RSC_Cache::delete( 'current_temperature' );
 
         $output = RSC_Display::render_shortcode( array() );
-        $this->assertStringContainsString( 'niet beschikbaar', strtolower( $output ) );
+        // Assert on the language-neutral error class rather than translated text.
+        $this->assertStringContainsString( 'rsc-error', $output );
     }
 
     public function test_format_wind_speed() {

@@ -1,10 +1,20 @@
-# Rhine Sailing Conditions Plugin - v1.1 Release
+# Rhine Sailing Conditions Plugin - v1.2 Release
 
 ## Release Information
-- **Version**: 1.1.0
+- **Version**: 1.2.0
 - **Initial Release**: June 2, 2026
 - **Latest Update**: June 3, 2026 (Real RWS API integration + plugin reconciliation)
 - **Status**: Production Ready with Real Data
+
+## v1.2.0 Changes
+- Proper i18n: all source strings are now **English**, with gettext
+  translations in `languages/` (Dutch `nl_NL` shipped as default, Frisian
+  `fy_NL` included as an example). Plurals use `_n()`.
+- Plugin UI defaults to Dutch via a `plugin_locale` filter; switchable with
+  the `rsc_locale` filter.
+- Example dashboards use a lightweight `examples/lang/` translation table with
+  a `t()` helper, switchable via the `RSC_LANG` environment variable; both are
+  now Dutch by default and emoji-free.
 
 ## v1.1.0 Changes
 - Registered the custom 15-min/30-min cron intervals (without this the fetch
@@ -105,12 +115,20 @@ rhine-sailing-conditions/
 ├── public/
 │   └── css/
 │       └── display.css             (Responsive styling)
+├── languages/
+│   ├── rhine-sailing-conditions.pot          (translation template)
+│   ├── rhine-sailing-conditions-nl_NL.po/.mo (Dutch, default)
+│   └── rhine-sailing-conditions-fy_NL.po/.mo (Frisian, example)
 ├── tests/
 │   ├── test-cache.php
 │   ├── test-validator.php
 │   ├── test-display.php
 │   └── test-fetcher.php
 ├── examples/
+│   ├── lang/
+│   │   ├── i18n.php                (t() helper + loader)
+│   │   ├── nl.php                  (Dutch table)
+│   │   └── fy.php                  (Frisian table)
 │   ├── rws-debug-dashboard.php     (Standalone RWS water data reference)
 │   └── combined-sailing-conditions.php  (Standalone full dashboard reference)
 ├── README.md                        (Installation guide - UPDATED)

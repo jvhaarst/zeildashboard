@@ -63,6 +63,33 @@ A WordPress plugin that displays real-time sailing conditions for the Rhine Rive
 - Multiple location support
 - Chart library integration
 
+## Internationalization (i18n)
+
+All source strings in the code are **English**; the user-facing language is provided by translations.
+
+**Plugin (WordPress / gettext):**
+- Source strings are wrapped in `__()` / `esc_html__()` / `_n()` with the text domain `rhine-sailing-conditions`.
+- Translations live in `languages/`:
+  - `rhine-sailing-conditions.pot` — template for translators
+  - `rhine-sailing-conditions-nl_NL.po` / `.mo` — Dutch (shipped default)
+  - `rhine-sailing-conditions-fy_NL.po` / `.mo` — West Frisian (example; needs native review)
+- The plugin **defaults its UI to Dutch** regardless of the site locale, via a `plugin_locale` filter. To switch language, drop in a matching `.mo` and override:
+  ```php
+  add_filter( 'rsc_locale', function () { return 'fy_NL'; } );
+  ```
+- Adding a language: copy the `.pot` to `rhine-sailing-conditions-<locale>.po`, translate, then compile:
+  ```bash
+  msgfmt languages/rhine-sailing-conditions-<locale>.po -o languages/rhine-sailing-conditions-<locale>.mo
+  ```
+
+**Example dashboards (standalone, non-WordPress):**
+- They can't use gettext, so they use a simple translation table in `examples/lang/` (`nl.php`, `fy.php`) via a `t()` helper.
+- Default is Dutch; switch with an environment variable:
+  ```bash
+  RSC_LANG=fy php -S localhost:8765
+  ```
+- Adding a language: drop a new `examples/lang/<code>.php` returning an `English => translation` array.
+
 ## Requirements
 
 - WordPress 5.0 or later

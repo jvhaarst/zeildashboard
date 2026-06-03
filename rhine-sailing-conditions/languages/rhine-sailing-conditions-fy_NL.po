@@ -1,0 +1,81 @@
+# West Frisian (Frysk) translation.
+# NOTE: machine/best-effort translations — please have a native speaker review.
+msgid ""
+msgstr ""
+"Project-Id-Version: Rhine Sailing Conditions 1.2.0\n"
+"Report-Msgid-Bugs-To: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fy_NL\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: includes/class-display.php
+msgid "Current conditions are unavailable. Please try again later."
+msgstr "Aktuele omstannichheden binne net beskikber. Probearje letter nochris."
+
+#: includes/class-display.php
+msgid "Warning: this data may be outdated."
+msgstr "Tink derom: dizze gegevens kinne ferâldere wêze."
+
+#: includes/class-display.php
+msgid "Rhine Sailing Conditions"
+msgstr "Ryn Sylomstannichheden"
+
+#: includes/class-display.php
+msgid "Updated"
+msgstr "Bywurke"
+
+#: includes/class-display.php
+msgid "Wind"
+msgstr "Wyn"
+
+#: includes/class-display.php
+msgid "Wind force:"
+msgstr "Wynkrêft:"
+
+#: includes/class-display.php
+msgid "Water level"
+msgstr "Wetterstân"
+
+#: includes/class-display.php
+msgid "Current speed"
+msgstr "Streamsnelheid"
+
+#: includes/class-display.php
+msgid "Water temperature"
+msgstr "Wettertemperatuer"
+
+#: includes/class-display.php
+msgid "Next 6 hours"
+msgstr "Kommende 6 oeren"
+
+#: includes/class-display.php
+msgid "never"
+msgstr "nea"
+
+#: includes/class-display.php
+msgid "just now"
+msgstr "krekt no"
+
+#. translators: %d: number of minutes.
+#: includes/class-display.php
+msgid "%d minute ago"
+msgid_plural "%d minutes ago"
+msgstr[0] "%d minút lyn"
+msgstr[1] "%d minuten lyn"
+
+#. translators: %d: number of hours.
+#: includes/class-display.php
+msgid "%d hour ago"
+msgid_plural "%d hours ago"
+msgstr[0] "%d oere lyn"
+msgstr[1] "%d oeren lyn"
+
+#: rhine-sailing-conditions.php
+msgid "Every 15 minutes"
+msgstr "Eltse 15 minuten"
+
+#: rhine-sailing-conditions.php
+msgid "Every 30 minutes"
+msgstr "Eltse 30 minuten"
