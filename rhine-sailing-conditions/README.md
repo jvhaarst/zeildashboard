@@ -22,6 +22,31 @@ A WordPress plugin that displays real-time sailing conditions for the Rhine Rive
    [rhine-sailing-conditions]
    ```
 
+## Running the example dashboards
+
+The `examples/` folder contains two standalone dashboards that fetch live data
+directly — no WordPress needed, just PHP. They're handy for previewing the look
+and verifying the APIs.
+
+```bash
+cd examples
+php -S localhost:8765
+```
+
+Then open:
+- http://localhost:8765/combined-sailing-conditions.php — full dashboard (wind + water + 6-hour forecast)
+- http://localhost:8765/rws-debug-dashboard.php — raw RWS measurements view
+
+The UI is Dutch by default. To run in another language, set `RSC_LANG` (a
+matching table must exist in `examples/lang/`, e.g. `fy.php`):
+
+```bash
+RSC_LANG=fy php -S localhost:8765
+```
+
+Requirements: PHP 7.4+ with outbound internet access (the dashboards call
+Open-Meteo and the Rijkswaterstaat DDAPI). Press `Ctrl+C` to stop the server.
+
 ## Data Sources
 
 - **Weather (Wind):** Open-Meteo API (free, no authentication)
