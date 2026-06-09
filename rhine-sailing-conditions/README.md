@@ -33,9 +33,12 @@ cd examples
 php -S localhost:8765
 ```
 
-Then open:
+Then open http://localhost:8765/ — it redirects to the combined dashboard.
+The individual pages are:
 - http://localhost:8765/combined-sailing-conditions.php — full dashboard (wind + water + 6-hour forecast)
 - http://localhost:8765/rws-debug-dashboard.php — raw RWS measurements view
+
+(Opening `localhost:8765` without a path used to 404 — the `index.php` redirect fixes that.)
 
 The UI is Dutch by default. To run in another language, set `RSC_LANG` (a
 matching table must exist in `examples/lang/`, e.g. `fy.php`):
