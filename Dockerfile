@@ -3,7 +3,7 @@
 # Stock multi-arch PHP image (arm64 for the Raspberry Pi k3s nodes). The curl
 # and openssl extensions are enabled by default; the dashboards also have a
 # stream-wrapper fallback, so no extra extensions are needed.
-FROM php:8.3-apache
+FROM php:8.5-apache
 
 # Bake the standalone dashboard into the docroot. The directory layout must
 # match what the code expects: examples/lib/data.php resolves
