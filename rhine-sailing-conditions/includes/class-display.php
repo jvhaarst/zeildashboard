@@ -21,6 +21,10 @@ class RSC_Display {
      * @return string HTML output
      */
     public static function render_shortcode( $atts = array() ) {
+        // Self-heal: refresh on render if the cache has gone stale (e.g. when
+        // WP-Cron has not run on a low-traffic site). Guarded by a lock inside.
+        RSC_Fetcher::maybe_refresh();
+
         // Get cached data
         $wind          = RSC_Cache::get( 'current_wind' );
         $water_level   = RSC_Cache::get( 'current_water_level' );
@@ -34,7 +38,6 @@ class RSC_Display {
             return '<div class="rsc-error">' . esc_html__( 'Current conditions are unavailable. Please try again later.', self::TEXT_DOMAIN ) . '</div>';
         }
 
-        // Build HTML output
         $html  = '<div class="rsc-dashboard">';
         $html .= self::render_header();
 
@@ -42,56 +45,90 @@ class RSC_Display {
             $html .= '<div class="rsc-stale">' . esc_html__( 'Warning: this data may be outdated.', self::TEXT_DOMAIN ) . '</div>';
         }
 
-        $html .= '<div class="rsc-container">';
-        $html .= '<div class="rsc-current">';
+        // Recommendation eyecatcher (needs both wind and current speed).
+        if ( $wind && $current_speed ) {
+            $html .= self::render_recommendation( $wind, $current_speed );
+        }
+
+        $html .= '<div class="rsc-grid">';
 
         if ( $wind ) {
             $html .= self::render_wind( $wind );
         }
-        if ( $water_level ) {
-            $html .= self::render_water_level( $water_level );
+        if ( $water_level || $current_speed || $temperature ) {
+            $html .= self::render_water( $water_level, $current_speed, $temperature );
         }
-        if ( $current_speed ) {
-            $html .= self::render_current_speed( $current_speed );
+        if ( $wind && $current_speed ) {
+            $html .= self::render_assessment( $wind, $current_speed );
         }
-        if ( $temperature ) {
-            $html .= self::render_temperature( $temperature );
-        }
-
-        $html .= '</div>'; // .rsc-current
-
         if ( $wind_forecast || $precip_forecast ) {
-            $html .= '<div class="rsc-forecast">';
-            if ( $wind_forecast ) {
-                $html .= self::render_forecast( $wind_forecast );
-            }
-            if ( $precip_forecast ) {
-                $html .= self::render_precipitation_forecast( $precip_forecast );
-            }
-            $html .= '</div>'; // .rsc-forecast
+            $html .= self::render_forecast_card( $wind_forecast, $precip_forecast );
         }
 
-        $html .= '</div>'; // .rsc-container
+        $html .= '</div>'; // .rsc-grid
         $html .= '</div>'; // .rsc-dashboard
 
         return $html;
     }
 
     /**
-     * Render dashboard header
+     * Render dashboard header (title + last-update line).
      *
      * @return string HTML
      */
     private static function render_header() {
         $last_update = self::get_last_update_time();
         return '<div class="rsc-header">
-            <h3>' . esc_html__( 'Rhine Sailing Conditions', self::TEXT_DOMAIN ) . '</h3>
+            <h3 class="rsc-title">' . esc_html__( 'Rhine Sailing Conditions', self::TEXT_DOMAIN ) . '</h3>
             <p class="rsc-updated">' . esc_html__( 'Updated', self::TEXT_DOMAIN ) . ' ' . esc_html( $last_update ) . '</p>
         </div>';
     }
 
     /**
-     * Render wind data
+     * Render the recommendation "eyecatcher" card.
+     *
+     * @param array $wind          Wind data array.
+     * @param array $current_speed Current speed data array.
+     * @return string HTML
+     */
+    private static function render_recommendation( $wind, $current_speed ) {
+        $wind_knots    = isset( $wind['speed'] ) ? (float) $wind['speed'] : 0;
+        $current_knots = isset( $current_speed['speed_knots'] ) ? (float) $current_speed['speed_knots'] : 0;
+
+        $assessment = RSC_Assessment::evaluate( $wind_knots, $current_knots );
+        $badge_class = ( 'good' === $assessment['status'] ) ? 'rsc-badge-good' : 'rsc-badge-caution';
+
+        // Compact at-a-glance verdicts.
+        if ( $wind_knots < 6 ) {
+            $wind_verdict = __( 'Too weak', self::TEXT_DOMAIN );
+        } elseif ( $wind_knots < 15 ) {
+            $wind_verdict = __( 'Good', self::TEXT_DOMAIN );
+        } else {
+            $wind_verdict = __( 'Too strong', self::TEXT_DOMAIN );
+        }
+        $current_verdict = ( $current_knots < 2.5 ) ? __( 'Safe', self::TEXT_DOMAIN ) : __( 'Strong', self::TEXT_DOMAIN );
+
+        return '<div class="rsc-reco-card">
+            <h4 class="rsc-reco-title">' . esc_html__( 'Sailing recommendation', self::TEXT_DOMAIN ) . '</h4>
+            <div class="rsc-reco-row">
+                <span class="rsc-badge ' . $badge_class . '">' . esc_html( self::translate( $assessment['recommendation'] ) ) . '</span>
+                <div class="rsc-chips">
+                    <div class="rsc-chip">
+                        <span class="rsc-chip-label">' . esc_html__( 'Wind for sailing', self::TEXT_DOMAIN ) . '</span>
+                        <span class="rsc-chip-value">' . esc_html( $wind_verdict ) . '</span>
+                    </div>
+                    <div class="rsc-chip">
+                        <span class="rsc-chip-label">' . esc_html__( 'Current speed', self::TEXT_DOMAIN ) . '</span>
+                        <span class="rsc-chip-value">' . esc_html( $current_verdict ) . '</span>
+                    </div>
+                </div>
+            </div>
+            <p class="rsc-reco-hint">' . esc_html__( 'Ideal conditions: 6-15 knots wind + current under 2.5 knots', self::TEXT_DOMAIN ) . '</p>
+        </div>';
+    }
+
+    /**
+     * Render wind data card.
      *
      * @param array $wind Wind data array
      * @return string HTML
@@ -99,13 +136,152 @@ class RSC_Display {
     private static function render_wind( $wind ) {
         $direction = isset( $wind['direction'] ) ? esc_html( $wind['direction'] ) : '—';
         $speed     = isset( $wind['speed'] ) ? esc_html( $wind['speed'] ) : '—';
+        $gust      = isset( $wind['gust'] ) ? esc_html( $wind['gust'] ) : null;
         $beaufort  = isset( $wind['speed'] ) ? esc_html( self::knots_to_beaufort( $wind['speed'] ) ) : '—';
 
-        return '<div class="rsc-condition">
-            <div class="rsc-label">' . esc_html__( 'Wind', self::TEXT_DOMAIN ) . '</div>
-            <div class="rsc-value">' . $speed . ' kn ' . $direction . '</div>
-            <div class="rsc-sub">' . esc_html__( 'Wind force:', self::TEXT_DOMAIN ) . ' ' . $beaufort . ' Bft</div>
+        $html  = '<div class="rsc-card">';
+        $html .= '<h4 class="rsc-card-title">' . esc_html__( 'Wind conditions', self::TEXT_DOMAIN ) . '</h4>';
+
+        $html .= '<div class="rsc-metric">
+            <div class="rsc-label">' . esc_html__( 'Wind speed', self::TEXT_DOMAIN ) . '</div>
+            <div class="rsc-value">' . $speed . ' <span class="rsc-unit">kn</span></div>
+            <div class="rsc-sub">' . esc_html__( 'Wind force', self::TEXT_DOMAIN ) . ' ' . $beaufort . ' Bft</div>
         </div>';
+
+        $html .= '<div class="rsc-metric">
+            <div class="rsc-label">' . esc_html__( 'Direction', self::TEXT_DOMAIN ) . '</div>
+            <div class="rsc-direction">' . $direction . '</div>
+        </div>';
+
+        if ( null !== $gust ) {
+            $html .= '<div class="rsc-metric">
+                <div class="rsc-label">' . esc_html__( 'Wind gusts', self::TEXT_DOMAIN ) . '</div>
+                <div class="rsc-value">' . $gust . ' <span class="rsc-unit">kn</span></div>
+            </div>';
+        }
+
+        $html .= '</div>';
+        return $html;
+    }
+
+    /**
+     * Render the combined water card (level, current speed, temperature).
+     *
+     * @param array|false $water_level   Water level data or false.
+     * @param array|false $current_speed Current speed data or false.
+     * @param array|false $temperature   Temperature data or false.
+     * @return string HTML
+     */
+    private static function render_water( $water_level, $current_speed, $temperature ) {
+        $html  = '<div class="rsc-card">';
+        $html .= '<h4 class="rsc-card-title">' . esc_html__( 'Water conditions', self::TEXT_DOMAIN ) . '</h4>';
+
+        if ( $water_level ) {
+            $level = isset( $water_level['level'] ) ? esc_html( $water_level['level'] ) : '—';
+            $html .= '<div class="rsc-metric">
+                <div class="rsc-label">' . esc_html__( 'Water level', self::TEXT_DOMAIN ) . '</div>
+                <div class="rsc-value">' . $level . ' <span class="rsc-unit">m NAP</span></div>
+            </div>';
+        }
+
+        if ( $current_speed ) {
+            $knots = isset( $current_speed['speed_knots'] ) ? esc_html( $current_speed['speed_knots'] ) : '—';
+            $mps   = isset( $current_speed['speed_mps'] ) ? esc_html( $current_speed['speed_mps'] ) : null;
+            $sub   = ( null !== $mps ) ? '<div class="rsc-sub">' . $mps . ' m/s</div>' : '';
+            $html .= '<div class="rsc-metric">
+                <div class="rsc-label">' . esc_html__( 'Current speed', self::TEXT_DOMAIN ) . '</div>
+                <div class="rsc-value">' . $knots . ' <span class="rsc-unit">kn</span></div>
+                ' . $sub . '
+            </div>';
+        }
+
+        if ( $temperature ) {
+            $celsius = isset( $temperature['celsius'] ) ? esc_html( $temperature['celsius'] ) : '—';
+            $html .= '<div class="rsc-metric">
+                <div class="rsc-label">' . esc_html__( 'Water temperature', self::TEXT_DOMAIN ) . '</div>
+                <div class="rsc-value">' . $celsius . ' <span class="rsc-unit">°C</span></div>
+            </div>';
+        }
+
+        $html .= '</div>';
+        return $html;
+    }
+
+    /**
+     * Render the qualitative assessment card.
+     *
+     * @param array $wind          Wind data array.
+     * @param array $current_speed Current speed data array.
+     * @return string HTML
+     */
+    private static function render_assessment( $wind, $current_speed ) {
+        $wind_knots    = isset( $wind['speed'] ) ? (float) $wind['speed'] : 0;
+        $current_knots = isset( $current_speed['speed_knots'] ) ? (float) $current_speed['speed_knots'] : 0;
+        $assessment    = RSC_Assessment::evaluate( $wind_knots, $current_knots );
+
+        return '<div class="rsc-card">
+            <h4 class="rsc-card-title">' . esc_html__( 'Current assessment', self::TEXT_DOMAIN ) . '</h4>
+            <div class="rsc-metric">
+                <div class="rsc-label">' . esc_html__( 'Wind level', self::TEXT_DOMAIN ) . '</div>
+                <div class="rsc-value rsc-value-sm">' . esc_html( self::translate( $assessment['wind']['level'] ) ) . '</div>
+                <div class="rsc-sub">' . esc_html( self::translate( $assessment['wind']['description'] ) ) . '</div>
+            </div>
+            <div class="rsc-metric">
+                <div class="rsc-label">' . esc_html__( 'Water current', self::TEXT_DOMAIN ) . '</div>
+                <div class="rsc-value rsc-value-sm">' . esc_html( self::translate( $assessment['water']['level'] ) ) . '</div>
+                <div class="rsc-sub">' . esc_html( self::translate( $assessment['water']['description'] ) ) . '</div>
+            </div>
+        </div>';
+    }
+
+    /**
+     * Render the combined wind + precipitation forecast card.
+     *
+     * @param array|false $wind_forecast   Wind forecast list or false.
+     * @param array|false $precip_forecast Precipitation forecast list or false.
+     * @return string HTML
+     */
+    private static function render_forecast_card( $wind_forecast, $precip_forecast ) {
+        // Index precipitation by hour so we can line it up with the wind hours.
+        $precip_by_hour = array();
+        if ( is_array( $precip_forecast ) ) {
+            foreach ( $precip_forecast as $point ) {
+                if ( isset( $point['hour'] ) ) {
+                    $precip_by_hour[ (int) $point['hour'] ] = $point;
+                }
+            }
+        }
+
+        $hours = is_array( $wind_forecast ) ? $wind_forecast : array();
+
+        $html  = '<div class="rsc-card rsc-forecast-card">';
+        $html .= '<h4 class="rsc-card-title">' . esc_html__( 'Forecast (next 6 hours)', self::TEXT_DOMAIN ) . '</h4>';
+        $html .= '<div class="rsc-forecast-grid">';
+
+        foreach ( $hours as $point ) {
+            $hour_num = isset( $point['hour'] ) ? (int) $point['hour'] : 0;
+            $speed    = isset( $point['speed'] ) ? esc_html( $point['speed'] ) : '—';
+            $beaufort = isset( $point['speed'] ) ? esc_html( self::knots_to_beaufort( $point['speed'] ) ) : '—';
+
+            $html .= '<div class="rsc-forecast-cell">
+                <div class="rsc-forecast-hour">+' . esc_html( $hour_num ) . 'u</div>
+                <div class="rsc-forecast-line">' . $speed . ' kn</div>
+                <div class="rsc-forecast-sub">' . $beaufort . ' Bft</div>';
+
+            if ( isset( $precip_by_hour[ $hour_num ] ) ) {
+                $p  = $precip_by_hour[ $hour_num ];
+                $mm = isset( $p['precipitation'] ) ? esc_html( $p['precipitation'] ) : '—';
+                $html .= '<div class="rsc-forecast-line rsc-forecast-rain">' . $mm . ' mm</div>';
+                if ( isset( $p['probability'] ) && null !== $p['probability'] ) {
+                    $html .= '<div class="rsc-forecast-sub">' . esc_html( $p['probability'] ) . '%</div>';
+                }
+            }
+
+            $html .= '</div>';
+        }
+
+        $html .= '</div></div>';
+        return $html;
     }
 
     /**
@@ -127,117 +303,50 @@ class RSC_Display {
     }
 
     /**
-     * Render water level data
+     * Translate a dynamic English source string from RSC_Assessment.
      *
-     * @param array $water_level Water level array
-     * @return string HTML
+     * The strings come from RSC_Assessment at runtime, so xgettext cannot see
+     * them as literals here — register_strings() below lists them as literal
+     * __() calls so the .pot/.po stay in sync.
+     *
+     * @param string $string English source string.
+     * @return string Translated string.
      */
-    private static function render_water_level( $water_level ) {
-        $level = isset( $water_level['level'] ) ? esc_html( $water_level['level'] ) : '—';
-
-        return '<div class="rsc-condition">
-            <div class="rsc-label">' . esc_html__( 'Water level', self::TEXT_DOMAIN ) . '</div>
-            <div class="rsc-value">' . $level . ' m NAP</div>
-        </div>';
+    private static function translate( $string ) {
+        return __( $string, self::TEXT_DOMAIN );
     }
 
     /**
-     * Render current speed data
+     * No-op string registry so `xgettext` extracts the dynamic assessment
+     * strings translated via self::translate(). Never called at runtime.
      *
-     * @param array $current_speed Current speed array
-     * @return string HTML
+     * @return void
      */
-    private static function render_current_speed( $current_speed ) {
-        $knots = isset( $current_speed['speed_knots'] ) ? esc_html( $current_speed['speed_knots'] ) : '—';
-        $mps   = isset( $current_speed['speed_mps'] ) ? esc_html( $current_speed['speed_mps'] ) : null;
-
-        $sub = '';
-        if ( null !== $mps ) {
-            $sub = '<div class="rsc-sub">' . $mps . ' m/s</div>';
-        }
-
-        return '<div class="rsc-condition">
-            <div class="rsc-label">' . esc_html__( 'Current speed', self::TEXT_DOMAIN ) . '</div>
-            <div class="rsc-value">' . $knots . ' kn</div>
-            ' . $sub . '
-        </div>';
-    }
-
-    /**
-     * Render water temperature data
-     *
-     * @param array $temperature Temperature array
-     * @return string HTML
-     */
-    private static function render_temperature( $temperature ) {
-        $celsius = isset( $temperature['celsius'] ) ? esc_html( $temperature['celsius'] ) : '—';
-
-        return '<div class="rsc-condition">
-            <div class="rsc-label">' . esc_html__( 'Water temperature', self::TEXT_DOMAIN ) . '</div>
-            <div class="rsc-value">' . $celsius . ' °C</div>
-        </div>';
-    }
-
-    /**
-     * Render wind forecast
-     *
-     * @param array $forecast Forecast data array
-     * @return string HTML
-     */
-    private static function render_forecast( $forecast ) {
-        if ( empty( $forecast ) || ! is_array( $forecast ) ) {
-            return '';
-        }
-
-        $html  = '<div class="rsc-forecast-header">
-            <h4>' . esc_html__( 'Wind (next 6 hours)', self::TEXT_DOMAIN ) . '</h4>
-        </div>';
-        $html .= '<div class="rsc-forecast-chart">';
-
-        foreach ( $forecast as $hour ) {
-            $speed    = isset( $hour['speed'] ) ? esc_html( $hour['speed'] ) : '—';
-            $hour_num = isset( $hour['hour'] ) ? esc_html( $hour['hour'] ) : '—';
-            $html    .= '<div class="rsc-forecast-point">
-                <div class="rsc-forecast-hour">+' . $hour_num . 'u</div>
-                <div class="rsc-forecast-speed">' . $speed . ' kn</div>
-            </div>';
-        }
-
-        $html .= '</div>';
-        return $html;
-    }
-
-    /**
-     * Render precipitation forecast
-     *
-     * @param array $forecast Precipitation forecast data array
-     * @return string HTML
-     */
-    private static function render_precipitation_forecast( $forecast ) {
-        if ( empty( $forecast ) || ! is_array( $forecast ) ) {
-            return '';
-        }
-
-        $html  = '<div class="rsc-forecast-header">
-            <h4>' . esc_html__( 'Precipitation (next 6 hours)', self::TEXT_DOMAIN ) . '</h4>
-        </div>';
-        $html .= '<div class="rsc-forecast-chart">';
-
-        foreach ( $forecast as $hour ) {
-            $mm       = isset( $hour['precipitation'] ) ? esc_html( $hour['precipitation'] ) : '—';
-            $hour_num = isset( $hour['hour'] ) ? esc_html( $hour['hour'] ) : '—';
-            $prob     = ( isset( $hour['probability'] ) && null !== $hour['probability'] )
-                ? '<div class="rsc-forecast-hour">' . esc_html( $hour['probability'] ) . '%</div>'
-                : '';
-            $html    .= '<div class="rsc-forecast-point">
-                <div class="rsc-forecast-hour">+' . $hour_num . 'u</div>
-                <div class="rsc-forecast-speed">' . $mm . ' mm</div>
-                ' . $prob . '
-            </div>';
-        }
-
-        $html .= '</div>';
-        return $html;
+    public static function register_strings() {
+        // Wind / current levels.
+        __( 'Calm', self::TEXT_DOMAIN );
+        __( 'Light', self::TEXT_DOMAIN );
+        __( 'Moderate', self::TEXT_DOMAIN );
+        __( 'Strong', self::TEXT_DOMAIN );
+        __( 'Very strong', self::TEXT_DOMAIN );
+        __( 'Weak', self::TEXT_DOMAIN );
+        // Descriptions.
+        __( 'No wind', self::TEXT_DOMAIN );
+        __( 'Light breeze', self::TEXT_DOMAIN );
+        __( 'Nice breeze', self::TEXT_DOMAIN );
+        __( 'Strong wind', self::TEXT_DOMAIN );
+        __( 'Dangerous conditions', self::TEXT_DOMAIN );
+        __( 'Very weak current', self::TEXT_DOMAIN );
+        __( 'Light current', self::TEXT_DOMAIN );
+        __( 'Average current', self::TEXT_DOMAIN );
+        __( 'Strong current', self::TEXT_DOMAIN );
+        __( 'Very strong current', self::TEXT_DOMAIN );
+        // Recommendations.
+        __( 'Good conditions for sailing', self::TEXT_DOMAIN );
+        __( 'Insufficient wind for good sailing', self::TEXT_DOMAIN );
+        __( 'Wind too strong - caution advised', self::TEXT_DOMAIN );
+        __( 'Current too strong - caution advised', self::TEXT_DOMAIN );
+        __( 'Check conditions before sailing', self::TEXT_DOMAIN );
     }
 
     /**

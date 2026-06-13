@@ -1,10 +1,31 @@
-# Rhine Sailing Conditions Plugin - v1.3 Release
+# Rhine Sailing Conditions Plugin - v1.4 Release
 
 ## Release Information
-- **Version**: 1.3.0
+- **Version**: 1.4.0
 - **Initial Release**: June 2, 2026
-- **Latest Update**: June 3, 2026 (Real RWS API integration + plugin reconciliation)
+- **Latest Update**: June 13, 2026 (Production hardening — plugin + standalone dashboards)
 - **Status**: Production Ready with Real Data
+
+## v1.4.0 Changes
+- **Fixed a production-breaking RWS DDAPI change:** the `OphalenLaatsteWaarnemingen`
+  endpoint now requires PascalCase keys with locations as objects
+  (`{"LocatieLijst":[{"Code":"driel.boven"}], ...}`); the old lowercase/string-list
+  payload returned HTTP 400 and silently broke all water data. Timestamps moved
+  from `Tijd.waarde` to `Tijdstip`. Fixed in the plugin and both example dashboards.
+- **Real measured wind gusts** (`wind_gusts_10m`) instead of a 1.5× estimate.
+- **No more empty dashboards:** data is fetched on activation, and the shortcode
+  self-heals on render when the cache is stale (transient-locked), with an
+  `rsc_enable_lazy_refresh` filter to opt out. Cache options are now non-autoloaded.
+- **Polished shortcode UI:** recommendation eyecatcher + wind/water/assessment
+  cards + 6-hour forecast, restyled to the peterhensen.nl palette (scoped CSS).
+- **New `RSC_Assessment`** (pure PHP) holds the sailing thresholds; the standalone
+  dashboards reuse it, so plugin and examples can't drift.
+- **Standalone dashboards are now publicly deployable:** shared `examples/lib/data.php`
+  fetches over cURL (with a stream fallback) and caches responses on disk; a
+  failed fetch falls back to the last good value. Timestamps use Europe/Amsterdam.
+- **Offline, deterministic tests:** fetcher tests mock HTTP via `pre_http_request`
+  using fixtures in `tests/fixtures/`; added `tests/test-assessment.php`.
+- Added Dutch translations for all new strings (nl_NL complete; fy_NL best-effort).
 
 ## v1.3.0 Changes
 - Added a **6-hour precipitation forecast** (mm + probability) from Open-Meteo,

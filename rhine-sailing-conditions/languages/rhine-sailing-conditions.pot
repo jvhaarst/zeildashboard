@@ -1,85 +1,229 @@
-# Copyright (C) 2026 Sailing Club
-# This file is distributed under the same license as the Rhine Sailing Conditions plugin.
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Rhine Sailing Conditions package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Rhine Sailing Conditions 1.3.0\n"
+"Project-Id-Version: Rhine Sailing Conditions\n"
 "Report-Msgid-Bugs-To: \n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-06-13 09:57+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: includes/class-display.php
+#: rhine-sailing-conditions.php:77
+msgid "Every 15 minutes"
+msgstr ""
+
+#: rhine-sailing-conditions.php:81
+msgid "Every 30 minutes"
+msgstr ""
+
+#: includes/class-display.php:38
 msgid "Current conditions are unavailable. Please try again later."
 msgstr ""
 
-#: includes/class-display.php
+#: includes/class-display.php:45
 msgid "Warning: this data may be outdated."
 msgstr ""
 
-#: includes/class-display.php
+#: includes/class-display.php:82
 msgid "Rhine Sailing Conditions"
 msgstr ""
 
-#: includes/class-display.php
+#: includes/class-display.php:83
 msgid "Updated"
 msgstr ""
 
-#: includes/class-display.php
-msgid "Wind"
+#: includes/class-display.php:103
+msgid "Too weak"
 msgstr ""
 
-#: includes/class-display.php
-msgid "Wind force:"
+#: includes/class-display.php:105
+msgid "Good"
 msgstr ""
 
-#: includes/class-display.php
-msgid "Water level"
+#: includes/class-display.php:107
+msgid "Too strong"
 msgstr ""
 
-#: includes/class-display.php
+#: includes/class-display.php:109
+msgid "Safe"
+msgstr ""
+
+#: includes/class-display.php:109 includes/class-display.php:330
+msgid "Strong"
+msgstr ""
+
+#: includes/class-display.php:112
+msgid "Sailing recommendation"
+msgstr ""
+
+#: includes/class-display.php:117
+msgid "Wind for sailing"
+msgstr ""
+
+#: includes/class-display.php:121 includes/class-display.php:192
 msgid "Current speed"
 msgstr ""
 
-#: includes/class-display.php
+#: includes/class-display.php:126
+msgid "Ideal conditions: 6-15 knots wind + current under 2.5 knots"
+msgstr ""
+
+#: includes/class-display.php:143
+msgid "Wind conditions"
+msgstr ""
+
+#: includes/class-display.php:146
+msgid "Wind speed"
+msgstr ""
+
+#: includes/class-display.php:148
+msgid "Wind force"
+msgstr ""
+
+#: includes/class-display.php:152
+msgid "Direction"
+msgstr ""
+
+#: includes/class-display.php:158
+msgid "Wind gusts"
+msgstr ""
+
+#: includes/class-display.php:177
+msgid "Water conditions"
+msgstr ""
+
+#: includes/class-display.php:182
+msgid "Water level"
+msgstr ""
+
+#: includes/class-display.php:201
 msgid "Water temperature"
 msgstr ""
 
-#: includes/class-display.php
-msgid "Wind (next 6 hours)"
+#: includes/class-display.php:223
+msgid "Current assessment"
 msgstr ""
 
-#: includes/class-display.php
-msgid "Precipitation (next 6 hours)"
+#: includes/class-display.php:225
+msgid "Wind level"
 msgstr ""
 
-#: includes/class-display.php
+#: includes/class-display.php:230
+msgid "Water current"
+msgstr ""
+
+#: includes/class-display.php:258
+msgid "Forecast (next 6 hours)"
+msgstr ""
+
+#: includes/class-display.php:327
+msgid "Calm"
+msgstr ""
+
+#: includes/class-display.php:328
+msgid "Light"
+msgstr ""
+
+#: includes/class-display.php:329
+msgid "Moderate"
+msgstr ""
+
+#: includes/class-display.php:331
+msgid "Very strong"
+msgstr ""
+
+#: includes/class-display.php:332
+msgid "Weak"
+msgstr ""
+
+#: includes/class-display.php:334
+msgid "No wind"
+msgstr ""
+
+#: includes/class-display.php:335
+msgid "Light breeze"
+msgstr ""
+
+#: includes/class-display.php:336
+msgid "Nice breeze"
+msgstr ""
+
+#: includes/class-display.php:337
+msgid "Strong wind"
+msgstr ""
+
+#: includes/class-display.php:338
+msgid "Dangerous conditions"
+msgstr ""
+
+#: includes/class-display.php:339
+msgid "Very weak current"
+msgstr ""
+
+#: includes/class-display.php:340
+msgid "Light current"
+msgstr ""
+
+#: includes/class-display.php:341
+msgid "Average current"
+msgstr ""
+
+#: includes/class-display.php:342
+msgid "Strong current"
+msgstr ""
+
+#: includes/class-display.php:343
+msgid "Very strong current"
+msgstr ""
+
+#: includes/class-display.php:345
+msgid "Good conditions for sailing"
+msgstr ""
+
+#: includes/class-display.php:346
+msgid "Insufficient wind for good sailing"
+msgstr ""
+
+#: includes/class-display.php:347
+msgid "Wind too strong - caution advised"
+msgstr ""
+
+#: includes/class-display.php:348
+msgid "Current too strong - caution advised"
+msgstr ""
+
+#: includes/class-display.php:349
+msgid "Check conditions before sailing"
+msgstr ""
+
+#: includes/class-display.php:381
 msgid "never"
 msgstr ""
 
-#: includes/class-display.php
+#: includes/class-display.php:387
 msgid "just now"
 msgstr ""
 
-#. translators: %d: number of minutes.
-#: includes/class-display.php
+#: includes/class-display.php:391
+#, php-format
 msgid "%d minute ago"
 msgid_plural "%d minutes ago"
 msgstr[0] ""
 msgstr[1] ""
 
-#. translators: %d: number of hours.
-#: includes/class-display.php
+#: includes/class-display.php:395
+#, php-format
 msgid "%d hour ago"
 msgid_plural "%d hours ago"
 msgstr[0] ""
 msgstr[1] ""
-
-#: rhine-sailing-conditions.php
-msgid "Every 15 minutes"
-msgstr ""
-
-#: rhine-sailing-conditions.php
-msgid "Every 30 minutes"
-msgstr ""

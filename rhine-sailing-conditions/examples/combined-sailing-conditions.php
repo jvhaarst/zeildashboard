@@ -8,6 +8,7 @@
  */
 
 require __DIR__ . '/lang/i18n.php';
+require __DIR__ . '/lib/data.php';
 
 // Rhine location
 $location = [
@@ -16,66 +17,52 @@ $location = [
     'lon' => 5.3897
 ];
 
-// Fetch wind data from Open-Meteo
+// Fetch current wind (incl. real gusts) from Open-Meteo — cached.
 $wind_url = sprintf(
-    'https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=wind_speed_10m,wind_direction_10m&timezone=Europe/Amsterdam',
+    'https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m&timezone=Europe/Amsterdam',
     $location['lat'],
     $location['lon']
 );
+$wind_data = rsc_fetch_json($wind_url, 'combined_wind', RSC_CACHE_TTL_CURRENT);
 
-$wind_response = @file_get_contents($wind_url);
-$wind_data = json_decode($wind_response, true);
-
-// Fetch water data from RWS DDAPI
+// Fetch water data from the RWS DDAPI — cached.
 $rws_url = 'https://ddapi20-waterwebservices.rijkswaterstaat.nl/ONLINEWAARNEMINGENSERVICES/OphalenLaatsteWaarnemingen';
 $rws_payload = json_encode([
-    'locatieLijst' => ['driel.boven'],
-    'aquoPlusWaarnemingMetadataLijst' => [
-        ['aquoMetadata' => ['messageID' => 1]]
+    'LocatieLijst' => [['Code' => 'driel.boven']],
+    'AquoPlusWaarnemingMetadataLijst' => [
+        ['AquoMetadata' => ['MessageID' => 1]]
     ]
 ]);
-
-$context = stream_context_create([
-    'http' => [
-        'method' => 'POST',
-        'header' => 'Content-Type: application/json',
-        'content' => $rws_payload,
-        'timeout' => 10
-    ]
-]);
-
-$rws_response = @file_get_contents($rws_url, false, $context);
-$rws_data = json_decode($rws_response, true);
+$rws_data = rsc_fetch_json($rws_url, 'combined_rws', RSC_CACHE_TTL_CURRENT, 'POST', $rws_payload);
 
 // Extract wind data
 $wind = null;
 if (isset($wind_data['current'])) {
     $speed_kmh = floatval($wind_data['current']['wind_speed_10m']);
-    $speed_knots = $speed_kmh * 0.539957;
+    $speed_knots = $speed_kmh * RSC_KMH_TO_KNOTS;
     $direction_deg = intval($wind_data['current']['wind_direction_10m']);
 
-    // Converteer graden naar windrichting (Nederlands)
-    $directions = ['N', 'NNO', 'NO', 'ONO', 'O', 'OZO', 'ZO', 'ZZO', 'Z', 'ZZW', 'ZW', 'WZW', 'W', 'WNW', 'NW', 'NNW'];
-    $direction_idx = round($direction_deg / 22.5) % 16;
-    $direction = $directions[$direction_idx];
+    // Prefer the real measured gust; estimate only if absent.
+    $gust_knots = isset($wind_data['current']['wind_gusts_10m'])
+        ? floatval($wind_data['current']['wind_gusts_10m']) * RSC_KMH_TO_KNOTS
+        : $speed_knots * 1.5;
 
     $wind = [
         'speed_knots' => round($speed_knots, 1),
         'speed_kmh' => round($speed_kmh, 1),
-        'direction' => $direction,
+        'direction' => rsc_degrees_to_direction($direction_deg),
         'direction_deg' => $direction_deg,
-        'gust' => round($speed_knots * 1.5, 1)
+        'gust' => round($gust_knots, 1)
     ];
 }
 
-// Fetch 6-hour wind + precipitation forecast from Open-Meteo (one request,
-// same source as the current wind above).
+// Fetch 6-hour wind + precipitation forecast from Open-Meteo (one request) — cached.
 $forecast_url = sprintf(
     'https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&hourly=wind_speed_10m,precipitation,precipitation_probability&forecast_days=1&timezone=Europe/Amsterdam',
     $location['lat'],
     $location['lon']
 );
-$forecast_data = json_decode(@file_get_contents($forecast_url), true);
+$forecast_data = rsc_fetch_json($forecast_url, 'combined_forecast', RSC_CACHE_TTL_FORECAST);
 
 $forecast = [];
 if (isset($forecast_data['hourly']['wind_speed_10m'], $forecast_data['hourly']['precipitation'])) {
@@ -84,7 +71,7 @@ if (isset($forecast_data['hourly']['wind_speed_10m'], $forecast_data['hourly']['
     for ($i = 0; $i < $hours; $i++) {
         $forecast[] = [
             'hour'          => $i,
-            'wind_knots'    => round(floatval($h['wind_speed_10m'][$i]) * 0.539957, 1),
+            'wind_knots'    => round(floatval($h['wind_speed_10m'][$i]) * RSC_KMH_TO_KNOTS, 1),
             'precipitation' => round(floatval($h['precipitation'][$i] ?? 0), 1),
             'probability'   => isset($h['precipitation_probability'][$i]) ? intval($h['precipitation_probability'][$i]) : null,
         ];
@@ -99,7 +86,7 @@ if (isset($rws_data['WaarnemingenLijst'])) {
     foreach ($rws_data['WaarnemingenLijst'] as $waarneming) {
         $code = $waarneming['AquoMetadata']['Grootheid']['Code'] ?? '';
         $value = $waarneming['MetingenLijst'][0]['Meetwaarde']['Waarde_Numeriek'] ?? null;
-        $time = $waarneming['MetingenLijst'][0]['Tijd']['waarde'] ?? '';
+        $time = $waarneming['MetingenLijst'][0]['Tijdstip'] ?? '';
         $method = $waarneming['AquoMetadata']['WaardeBewerkingsMethode']['Code'] ?? '';
 
         if ($code === 'WATHTE' && $method !== 'GEM24H' && !$water) {
@@ -113,7 +100,7 @@ if (isset($rws_data['WaarnemingenLijst'])) {
         if ($code === 'STROOMSHD' && !$current_speed) {
             $current_speed = [
                 'mps' => round($value, 2),
-                'knots' => round($value * 1.94384, 2),
+                'knots' => round($value * RSC_MPS_TO_KNOTS, 2),
                 'time' => $time
             ];
         }
@@ -127,61 +114,10 @@ if (isset($rws_data['WaarnemingenLijst'])) {
     }
 }
 
-// Bepaal zeilomstandigheden (kwalitatieve beoordeling)
-function get_sailing_conditions($wind_knots, $current_knots) {
-    $conditions = [];
-
-    // Wind assessment (English keys; translated at output via t()).
-    if ($wind_knots < 3) $conditions['wind'] = ['level' => 'Calm', 'description' => 'No wind'];
-    elseif ($wind_knots < 6) $conditions['wind'] = ['level' => 'Light', 'description' => 'Light breeze'];
-    elseif ($wind_knots < 10) $conditions['wind'] = ['level' => 'Moderate', 'description' => 'Nice breeze'];
-    elseif ($wind_knots < 15) $conditions['wind'] = ['level' => 'Strong', 'description' => 'Strong wind'];
-    else $conditions['wind'] = ['level' => 'Very strong', 'description' => 'Dangerous conditions'];
-
-    // Current assessment.
-    if ($current_knots < 0.5) $conditions['water'] = ['level' => 'Weak', 'description' => 'Very weak current'];
-    elseif ($current_knots < 1.0) $conditions['water'] = ['level' => 'Light', 'description' => 'Light current'];
-    elseif ($current_knots < 2.0) $conditions['water'] = ['level' => 'Moderate', 'description' => 'Average current'];
-    elseif ($current_knots < 3.0) $conditions['water'] = ['level' => 'Strong', 'description' => 'Strong current'];
-    else $conditions['water'] = ['level' => 'Very strong', 'description' => 'Very strong current'];
-
-    // Overall recommendation. 'status' drives the badge colour and is
-    // language-independent; 'recommendation' is an English key for t().
-    if ($wind_knots >= 6 && $wind_knots < 15 && $current_knots < 2.5) {
-        $conditions['status'] = 'good';
-        $conditions['recommendation'] = 'Good conditions for sailing';
-    } elseif ($wind_knots < 6) {
-        $conditions['status'] = 'caution';
-        $conditions['recommendation'] = 'Insufficient wind for good sailing';
-    } elseif ($wind_knots >= 15) {
-        $conditions['status'] = 'caution';
-        $conditions['recommendation'] = 'Wind too strong - caution advised';
-    } elseif ($current_knots >= 2.5) {
-        $conditions['status'] = 'caution';
-        $conditions['recommendation'] = 'Current too strong - caution advised';
-    } else {
-        $conditions['status'] = 'caution';
-        $conditions['recommendation'] = 'Check conditions before sailing';
-    }
-
-    return $conditions;
-}
-
-// Converteer windsnelheid in knopen naar windkracht (Beaufort 0-12)
-function knots_to_beaufort($knots) {
-    $lower_bounds = [1, 4, 7, 11, 17, 22, 28, 34, 41, 48, 56, 64];
-    $force = 0;
-    foreach ($lower_bounds as $index => $min_knots) {
-        if ($knots >= $min_knots) {
-            $force = $index + 1;
-        }
-    }
-    return $force;
-}
-
+// Qualitative assessment via the shared RSC_Assessment (same as the plugin).
 $conditions = null;
 if ($wind && $current_speed && $temperature) {
-    $conditions = get_sailing_conditions($wind['speed_knots'], $current_speed['knots']);
+    $conditions = rsc_get_sailing_conditions($wind['speed_knots'], $current_speed['knots']);
 }
 
 $last_update = date('Y-m-d H:i:s');
@@ -554,7 +490,7 @@ $last_update = date('Y-m-d H:i:s');
                 <div class="metric">
                     <div class="metric-label"><?php echo htmlspecialchars( t( 'Wind speed' ) ); ?></div>
                     <div class="metric-value"><?php echo $wind['speed_knots']; ?> <span style="font-size: 0.6em;">kn</span></div>
-                    <div class="metric-secondary"><?php echo htmlspecialchars( t( 'Wind force' ) ); ?> <?php echo knots_to_beaufort($wind['speed_knots']); ?> Bft</div>
+                    <div class="metric-secondary"><?php echo htmlspecialchars( t( 'Wind force' ) ); ?> <?php echo rsc_knots_to_beaufort($wind['speed_knots']); ?> Bft</div>
                 </div>
 
                 <div class="metric">
@@ -634,7 +570,7 @@ $last_update = date('Y-m-d H:i:s');
                     <div class="forecast-cell">
                         <div class="forecast-hour">+<?php echo (int)$f['hour']; ?>u</div>
                         <div class="forecast-line"><?php echo $f['wind_knots']; ?> kn</div>
-                        <div class="forecast-sub"><?php echo knots_to_beaufort($f['wind_knots']); ?> Bft</div>
+                        <div class="forecast-sub"><?php echo rsc_knots_to_beaufort($f['wind_knots']); ?> Bft</div>
                         <div class="forecast-line forecast-rain"><?php echo $f['precipitation']; ?> mm</div>
                         <?php if ($f['probability'] !== null): ?>
                         <div class="forecast-sub"><?php echo (int)$f['probability']; ?>%</div>

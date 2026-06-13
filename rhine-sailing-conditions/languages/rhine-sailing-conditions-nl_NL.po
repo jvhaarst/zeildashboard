@@ -1,83 +1,226 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Rhine Sailing Conditions 1.3.0\n"
+"Project-Id-Version: Rhine Sailing Conditions 1.4.0\n"
 "Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-13 09:57+0200\n"
+"Language: nl_NL\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: nl_NL\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: includes/class-display.php
+#: rhine-sailing-conditions.php:77
+msgid "Every 15 minutes"
+msgstr "Elke 15 minuten"
+
+#: rhine-sailing-conditions.php:81
+msgid "Every 30 minutes"
+msgstr "Elke 30 minuten"
+
+#: includes/class-display.php:38
 msgid "Current conditions are unavailable. Please try again later."
 msgstr "Huidige omstandigheden niet beschikbaar. Probeer het later opnieuw."
 
-#: includes/class-display.php
+#: includes/class-display.php:45
 msgid "Warning: this data may be outdated."
 msgstr "Let op: deze gegevens zijn mogelijk verouderd."
 
-#: includes/class-display.php
+#: includes/class-display.php:82
 msgid "Rhine Sailing Conditions"
 msgstr "Rijn Zeilomstandigheden"
 
-#: includes/class-display.php
+#: includes/class-display.php:83
 msgid "Updated"
 msgstr "Bijgewerkt"
 
-#: includes/class-display.php
-msgid "Wind"
-msgstr "Wind"
+#: includes/class-display.php:103
+msgid "Too weak"
+msgstr "Te zwak"
 
-#: includes/class-display.php
-msgid "Wind force:"
-msgstr "Windkracht:"
+#: includes/class-display.php:105
+msgid "Good"
+msgstr "Goed"
 
-#: includes/class-display.php
-msgid "Water level"
-msgstr "Waterstand"
+#: includes/class-display.php:107
+msgid "Too strong"
+msgstr "Te sterk"
 
-#: includes/class-display.php
+#: includes/class-display.php:109
+msgid "Safe"
+msgstr "Veilig"
+
+#: includes/class-display.php:109 includes/class-display.php:330
+msgid "Strong"
+msgstr "Sterk"
+
+#: includes/class-display.php:112
+msgid "Sailing recommendation"
+msgstr "Zeilaanbeveling"
+
+#: includes/class-display.php:117
+msgid "Wind for sailing"
+msgstr "Wind voor zeilen"
+
+#: includes/class-display.php:121 includes/class-display.php:192
 msgid "Current speed"
 msgstr "Stroomsnelheid"
 
-#: includes/class-display.php
+#: includes/class-display.php:126
+msgid "Ideal conditions: 6-15 knots wind + current under 2.5 knots"
+msgstr "Ideale omstandigheden: 6-15 knopen wind + stroming onder 2,5 knopen"
+
+#: includes/class-display.php:143
+msgid "Wind conditions"
+msgstr "Windcondities"
+
+#: includes/class-display.php:146
+msgid "Wind speed"
+msgstr "Windsnelheid"
+
+#: includes/class-display.php:148
+msgid "Wind force"
+msgstr "Windkracht"
+
+#: includes/class-display.php:152
+msgid "Direction"
+msgstr "Richting"
+
+#: includes/class-display.php:158
+msgid "Wind gusts"
+msgstr "Windvlagen"
+
+#: includes/class-display.php:177
+msgid "Water conditions"
+msgstr "Watercondities"
+
+#: includes/class-display.php:182
+msgid "Water level"
+msgstr "Waterstand"
+
+#: includes/class-display.php:201
 msgid "Water temperature"
 msgstr "Watertemperatuur"
 
-#: includes/class-display.php
-msgid "Wind (next 6 hours)"
-msgstr "Wind (komende 6 uur)"
+#: includes/class-display.php:223
+msgid "Current assessment"
+msgstr "Huidige beoordeling"
 
-#: includes/class-display.php
-msgid "Precipitation (next 6 hours)"
-msgstr "Neerslag (komende 6 uur)"
+#: includes/class-display.php:225
+msgid "Wind level"
+msgstr "Windniveau"
 
-#: includes/class-display.php
+#: includes/class-display.php:230
+msgid "Water current"
+msgstr "Waterstroming"
+
+#: includes/class-display.php:258
+msgid "Forecast (next 6 hours)"
+msgstr "Verwachting (komende 6 uur)"
+
+#: includes/class-display.php:327
+msgid "Calm"
+msgstr "Windstil"
+
+#: includes/class-display.php:328
+msgid "Light"
+msgstr "Licht"
+
+#: includes/class-display.php:329
+msgid "Moderate"
+msgstr "Matig"
+
+#: includes/class-display.php:331
+msgid "Very strong"
+msgstr "Zeer sterk"
+
+#: includes/class-display.php:332
+msgid "Weak"
+msgstr "Zwak"
+
+#: includes/class-display.php:334
+msgid "No wind"
+msgstr "Geen wind"
+
+#: includes/class-display.php:335
+msgid "Light breeze"
+msgstr "Lichte bries"
+
+#: includes/class-display.php:336
+msgid "Nice breeze"
+msgstr "Fijne bries"
+
+#: includes/class-display.php:337
+msgid "Strong wind"
+msgstr "Sterke wind"
+
+#: includes/class-display.php:338
+msgid "Dangerous conditions"
+msgstr "Gevaarlijke omstandigheden"
+
+#: includes/class-display.php:339
+msgid "Very weak current"
+msgstr "Zeer zwakke stroming"
+
+#: includes/class-display.php:340
+msgid "Light current"
+msgstr "Lichte stroming"
+
+#: includes/class-display.php:341
+msgid "Average current"
+msgstr "Gemiddelde stroming"
+
+#: includes/class-display.php:342
+msgid "Strong current"
+msgstr "Sterke stroming"
+
+#: includes/class-display.php:343
+msgid "Very strong current"
+msgstr "Zeer sterke stroming"
+
+#: includes/class-display.php:345
+msgid "Good conditions for sailing"
+msgstr "Prima omstandigheden voor zeilen"
+
+#: includes/class-display.php:346
+msgid "Insufficient wind for good sailing"
+msgstr "Onvoldoende wind voor goed zeilen"
+
+#: includes/class-display.php:347
+msgid "Wind too strong - caution advised"
+msgstr "Wind te sterk - voorzichtigheid geadviseerd"
+
+#: includes/class-display.php:348
+msgid "Current too strong - caution advised"
+msgstr "Stroming te sterk - voorzichtigheid geadviseerd"
+
+#: includes/class-display.php:349
+msgid "Check conditions before sailing"
+msgstr "Controleer omstandigheden voor zeilen"
+
+#: includes/class-display.php:381
 msgid "never"
 msgstr "nooit"
 
-#: includes/class-display.php
+#: includes/class-display.php:387
 msgid "just now"
 msgstr "zojuist"
 
-#. translators: %d: number of minutes.
-#: includes/class-display.php
+#: includes/class-display.php:391
+#, php-format
 msgid "%d minute ago"
 msgid_plural "%d minutes ago"
 msgstr[0] "%d minuut geleden"
 msgstr[1] "%d minuten geleden"
 
-#. translators: %d: number of hours.
-#: includes/class-display.php
+#: includes/class-display.php:395
+#, php-format
 msgid "%d hour ago"
 msgid_plural "%d hours ago"
 msgstr[0] "%d uur geleden"
 msgstr[1] "%d uur geleden"
 
-#: rhine-sailing-conditions.php
-msgid "Every 15 minutes"
-msgstr "Elke 15 minuten"
+#~ msgid "Wind"
+#~ msgstr "Wind"
 
-#: rhine-sailing-conditions.php
-msgid "Every 30 minutes"
-msgstr "Elke 30 minuten"
+#~ msgid "Wind (next 6 hours)"
+#~ msgstr "Wind (komende 6 uur)"

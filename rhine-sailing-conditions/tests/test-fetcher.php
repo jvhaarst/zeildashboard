@@ -1,60 +1,95 @@
 <?php
 /**
- * Tests for RSC_Fetcher class
+ * Tests for RSC_Fetcher class.
+ *
+ * HTTP is intercepted via the `pre_http_request` filter and served from the
+ * JSON fixtures in tests/fixtures/, so these run offline and deterministically
+ * — no live calls to Open-Meteo or Rijkswaterstaat.
  */
 
 class Test_RSC_Fetcher extends WP_UnitTestCase {
 
+	/** @var array Raw decoded fixtures, for computing expected values. */
+	private $fixtures = array();
+
 	public function setUp(): void {
 		parent::setUp();
-		// Clean up any test data
-		delete_option( 'rsc_current_wind' );
-		delete_option( 'rsc_timestamp_current_wind' );
-		delete_option( 'rsc_current_water_level' );
-		delete_option( 'rsc_timestamp_current_water_level' );
-		delete_option( 'rsc_current_speed' );
-		delete_option( 'rsc_timestamp_current_speed' );
-		delete_option( 'rsc_current_temperature' );
-		delete_option( 'rsc_timestamp_current_temperature' );
-		delete_option( 'rsc_forecast_wind' );
-		delete_option( 'rsc_timestamp_forecast_wind' );
-		delete_option( 'rsc_forecast_precipitation' );
-		delete_option( 'rsc_timestamp_forecast_precipitation' );
-		delete_option( 'rsc_last_api_error' );
-		delete_option( 'rsc_timestamp_last_api_error' );
+
+		$dir = __DIR__ . '/fixtures/';
+		$this->fixtures = array(
+			'wind'     => file_get_contents( $dir . 'openmeteo-wind.json' ),
+			'forecast' => file_get_contents( $dir . 'openmeteo-forecast.json' ),
+			'rws'      => file_get_contents( $dir . 'rws-driel-boven.json' ),
+		);
+
+		add_filter( 'pre_http_request', array( $this, 'serve_fixture' ), 10, 3 );
+
+		foreach ( array( 'current_wind', 'current_water_level', 'current_speed', 'current_temperature', 'forecast_wind', 'forecast_precipitation', 'last_api_error' ) as $key ) {
+			RSC_Cache::delete( $key );
+		}
 	}
 
 	public function tearDown(): void {
+		remove_filter( 'pre_http_request', array( $this, 'serve_fixture' ), 10 );
+		foreach ( array( 'current_wind', 'current_water_level', 'current_speed', 'current_temperature', 'forecast_wind', 'forecast_precipitation' ) as $key ) {
+			RSC_Cache::delete( $key );
+		}
 		parent::tearDown();
-		// Clear all cache entries
-		RSC_Cache::delete( 'current_wind' );
-		RSC_Cache::delete( 'current_water_level' );
-		RSC_Cache::delete( 'current_speed' );
-		RSC_Cache::delete( 'current_temperature' );
-		RSC_Cache::delete( 'forecast_wind' );
-		RSC_Cache::delete( 'forecast_precipitation' );
+	}
+
+	/**
+	 * Route each outbound request to the matching fixture.
+	 *
+	 * @param false  $preempt Short-circuit value (false to proceed normally).
+	 * @param array  $args    Request args.
+	 * @param string $url     Request URL.
+	 * @return array WP HTTP response array.
+	 */
+	public function serve_fixture( $preempt, $args, $url ) {
+		if ( false !== strpos( $url, 'rijkswaterstaat' ) ) {
+			$body = $this->fixtures['rws'];
+		} elseif ( false !== strpos( $url, 'hourly=' ) ) {
+			$body = $this->fixtures['forecast'];
+		} else {
+			$body = $this->fixtures['wind'];
+		}
+
+		return array(
+			'body'     => $body,
+			'response' => array( 'code' => 200, 'message' => 'OK' ),
+			'headers'  => array(),
+			'cookies'  => array(),
+		);
 	}
 
 	public function test_fetch_current_conditions_success() {
-		$result = RSC_Fetcher::fetch_current_conditions();
-		// Should return true on success
-		$this->assertTrue( $result );
+		$this->assertTrue( RSC_Fetcher::fetch_current_conditions() );
 	}
 
 	public function test_current_conditions_cached_after_fetch() {
 		RSC_Fetcher::fetch_current_conditions();
 		$wind = RSC_Cache::get( 'current_wind' );
-		$this->assertNotFalse( $wind );
 		$this->assertIsArray( $wind );
 		$this->assertArrayHasKey( 'direction', $wind );
 		$this->assertArrayHasKey( 'speed', $wind );
 		$this->assertArrayHasKey( 'gust', $wind );
 	}
 
+	public function test_wind_uses_real_measured_gust() {
+		RSC_Fetcher::fetch_current_conditions();
+		$wind = RSC_Cache::get( 'current_wind' );
+
+		$raw       = json_decode( $this->fixtures['wind'], true );
+		$gust_kmh  = (float) $raw['current']['wind_gusts_10m'];
+		$expected  = round( $gust_kmh * 0.539957, 1 );
+
+		// Gust comes from wind_gusts_10m, not the 1.5x speed estimate.
+		$this->assertEqualsWithDelta( $expected, $wind['gust'], 0.05 );
+	}
+
 	public function test_water_level_cached_after_fetch() {
 		RSC_Fetcher::fetch_current_conditions();
 		$water_level = RSC_Cache::get( 'current_water_level' );
-		$this->assertNotFalse( $water_level );
 		$this->assertIsArray( $water_level );
 		$this->assertArrayHasKey( 'level', $water_level );
 	}
@@ -62,7 +97,6 @@ class Test_RSC_Fetcher extends WP_UnitTestCase {
 	public function test_current_speed_cached_after_fetch() {
 		RSC_Fetcher::fetch_current_conditions();
 		$speed = RSC_Cache::get( 'current_speed' );
-		$this->assertNotFalse( $speed );
 		$this->assertIsArray( $speed );
 		$this->assertArrayHasKey( 'speed_knots', $speed );
 		$this->assertArrayHasKey( 'speed_mps', $speed );
@@ -71,80 +105,45 @@ class Test_RSC_Fetcher extends WP_UnitTestCase {
 	public function test_temperature_cached_after_fetch() {
 		RSC_Fetcher::fetch_current_conditions();
 		$temperature = RSC_Cache::get( 'current_temperature' );
-		$this->assertNotFalse( $temperature );
 		$this->assertIsArray( $temperature );
 		$this->assertArrayHasKey( 'celsius', $temperature );
 	}
 
 	public function test_fetch_forecast_success() {
-		$result = RSC_Fetcher::fetch_forecast();
-		$this->assertTrue( $result );
+		$this->assertTrue( RSC_Fetcher::fetch_forecast() );
 	}
 
 	public function test_forecast_wind_cached_after_fetch() {
 		RSC_Fetcher::fetch_forecast();
 		$forecast = RSC_Cache::get( 'forecast_wind' );
-		$this->assertNotFalse( $forecast );
 		$this->assertIsArray( $forecast );
 		$this->assertGreaterThan( 0, count( $forecast ) );
+		$this->assertLessThanOrEqual( 6, count( $forecast ) );
 	}
 
 	public function test_forecast_precipitation_cached_after_fetch() {
 		RSC_Fetcher::fetch_forecast();
 		$forecast = RSC_Cache::get( 'forecast_precipitation' );
-		$this->assertNotFalse( $forecast );
 		$this->assertIsArray( $forecast );
-		$this->assertGreaterThan( 0, count( $forecast ) );
 		$this->assertArrayHasKey( 'precipitation', $forecast[0] );
 		$this->assertArrayHasKey( 'hour', $forecast[0] );
 	}
 
-	public function test_fetch_returns_false_on_wind_validation_failure() {
-		// Verify that a successful fetch caches at least one current measurement.
-		$result = RSC_Fetcher::fetch_current_conditions();
-		if ( $result ) {
-			$wind        = RSC_Cache::get( 'current_wind' );
-			$water       = RSC_Cache::get( 'current_water_level' );
-			$speed       = RSC_Cache::get( 'current_speed' );
-			$temperature = RSC_Cache::get( 'current_temperature' );
-			$this->assertTrue(
-				$wind !== false || $water !== false || $speed !== false || $temperature !== false
-			);
-		}
-	}
+	public function test_fetch_returns_false_when_request_fails() {
+		// Override the fixture filter with one that simulates an API outage.
+		remove_filter( 'pre_http_request', array( $this, 'serve_fixture' ), 10 );
+		add_filter( 'pre_http_request', function () {
+			return new WP_Error( 'http_request_failed', 'simulated outage' );
+		} );
 
-	public function test_forecast_and_current_conditions_separate() {
-		// Fetch current conditions
-		$result_current = RSC_Fetcher::fetch_current_conditions();
-		$this->assertTrue( $result_current );
-
-		// Fetch forecasts
-		$result_forecast = RSC_Fetcher::fetch_forecast();
-		$this->assertTrue( $result_forecast );
-
-		// Verify both are cached separately
-		$wind     = RSC_Cache::get( 'current_wind' );
-		$forecast = RSC_Cache::get( 'forecast_wind' );
-
-		$this->assertNotFalse( $wind );
-		$this->assertNotFalse( $forecast );
-
-		$this->assertIsArray( $wind );
-		$this->assertIsArray( $forecast );
+		$this->assertFalse( RSC_Fetcher::fetch_current_conditions() );
 	}
 
 	public function test_all_conditions_cached_together() {
 		RSC_Fetcher::fetch_current_conditions();
-
-		$wind        = RSC_Cache::get( 'current_wind' );
-		$water       = RSC_Cache::get( 'current_water_level' );
-		$speed       = RSC_Cache::get( 'current_speed' );
-		$temperature = RSC_Cache::get( 'current_temperature' );
-
-		// All four must be cached
-		$this->assertNotFalse( $wind );
-		$this->assertNotFalse( $water );
-		$this->assertNotFalse( $speed );
-		$this->assertNotFalse( $temperature );
+		$this->assertIsArray( RSC_Cache::get( 'current_wind' ) );
+		$this->assertIsArray( RSC_Cache::get( 'current_water_level' ) );
+		$this->assertIsArray( RSC_Cache::get( 'current_speed' ) );
+		$this->assertIsArray( RSC_Cache::get( 'current_temperature' ) );
 	}
 }
