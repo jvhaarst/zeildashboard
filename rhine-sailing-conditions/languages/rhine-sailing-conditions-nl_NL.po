@@ -179,23 +179,23 @@ msgstr "Zeer sterke stroming"
 
 #: includes/class-display.php:345
 msgid "Good conditions for sailing"
-msgstr "Prima omstandigheden voor zeilen"
+msgstr "Prima omstandigheden om te zeilen"
 
 #: includes/class-display.php:346
 msgid "Insufficient wind for good sailing"
-msgstr "Onvoldoende wind voor goed zeilen"
+msgstr "Onvoldoende wind om lekker te zeilen"
 
 #: includes/class-display.php:347
 msgid "Wind too strong - caution advised"
-msgstr "Wind te sterk - voorzichtigheid geadviseerd"
+msgstr "Wind te sterk - oplettendheid geadviseerd"
 
 #: includes/class-display.php:348
 msgid "Current too strong - caution advised"
-msgstr "Stroming te sterk - voorzichtigheid geadviseerd"
+msgstr "Stroming te sterk - oplettendheid geadviseerd"
 
 #: includes/class-display.php:349
 msgid "Check conditions before sailing"
-msgstr "Controleer omstandigheden voor zeilen"
+msgstr "Controleer omstandigheden voor het zeilen"
 
 #: includes/class-display.php:381
 msgid "never"
