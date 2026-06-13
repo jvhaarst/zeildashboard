@@ -1,0 +1,14 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "description": "Group the php:apache base-image bumps",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["php"],
+      "groupName": "php-apache base image"
+    }
+  ]
+}
