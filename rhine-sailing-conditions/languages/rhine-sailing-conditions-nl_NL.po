@@ -55,11 +55,11 @@ msgstr "Sterk"
 
 #: includes/class-display.php:112
 msgid "Sailing recommendation"
-msgstr "Zeilaanbeveling"
+msgstr "Zeiladvies"
 
 #: includes/class-display.php:117
 msgid "Wind for sailing"
-msgstr "Wind voor zeilen"
+msgstr "Zeilwind"
 
 #: includes/class-display.php:121 includes/class-display.php:192
 msgid "Current speed"
@@ -71,7 +71,7 @@ msgstr "Ideale omstandigheden: 6-15 knopen wind + stroming onder 2,5 knopen"
 
 #: includes/class-display.php:143
 msgid "Wind conditions"
-msgstr "Windcondities"
+msgstr "Windomstandigheden"
 
 #: includes/class-display.php:146
 msgid "Wind speed"
@@ -91,7 +91,7 @@ msgstr "Windvlagen"
 
 #: includes/class-display.php:177
 msgid "Water conditions"
-msgstr "Watercondities"
+msgstr "Wateromstandigheden"
 
 #: includes/class-display.php:182
 msgid "Water level"
@@ -107,7 +107,7 @@ msgstr "Huidige beoordeling"
 
 #: includes/class-display.php:225
 msgid "Wind level"
-msgstr "Windniveau"
+msgstr "Windsterkte"
 
 #: includes/class-display.php:230
 msgid "Water current"
@@ -187,11 +187,11 @@ msgstr "Onvoldoende wind om lekker te zeilen"
 
 #: includes/class-display.php:347
 msgid "Wind too strong - caution advised"
-msgstr "Wind te sterk - oplettendheid geadviseerd"
+msgstr "Wind te sterk - let op"
 
 #: includes/class-display.php:348
 msgid "Current too strong - caution advised"
-msgstr "Stroming te sterk - oplettendheid geadviseerd"
+msgstr "Stroming te sterk - let op"
 
 #: includes/class-display.php:349
 msgid "Check conditions before sailing"
