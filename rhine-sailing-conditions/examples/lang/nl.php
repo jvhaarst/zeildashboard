@@ -69,7 +69,7 @@ return array(
 
     // Recommendations
     'Good conditions for sailing'        => 'Prima omstandigheden voor zeilen',
-    'Insufficient wind for good sailing' => 'Onvoldoende wind voor goed zeilen',
+    'Insufficient wind for good sailing' => 'Onvoldoende wind voor lekker zeilen',
     'Wind too strong - caution advised'  => 'Wind te sterk - voorzichtigheid geadviseerd',
     'Current too strong - caution advised' => 'Stroming te sterk - voorzichtigheid geadviseerd',
     'Check conditions before sailing'    => 'Controleer omstandigheden voor zeilen',

@@ -1,0 +1,17 @@
+# Keep the build context small and never leak local-only files.
+.git
+.github
+.superpowers
+.claude
+docs
+secrets
+secrets.*
+*.env
+.env
+.DS_Store
+# Only the dashboard subset is COPYed; exclude the rest of the plugin.
+rhine-sailing-conditions/tests
+rhine-sailing-conditions/languages
+rhine-sailing-conditions/public
+rhine-sailing-conditions/*.php
+rhine-sailing-conditions/*.md
