@@ -8,28 +8,19 @@
  */
 
 require __DIR__ . '/lang/i18n.php';
+require __DIR__ . '/lib/data.php';
 
-// Fetch latest data from RWS DDAPI
+// Fetch latest data from RWS DDAPI (cURL + on-disk cache, resilient to outages).
 $url = 'https://ddapi20-waterwebservices.rijkswaterstaat.nl/ONLINEWAARNEMINGENSERVICES/OphalenLaatsteWaarnemingen';
 
 $payload = json_encode([
-    'locatieLijst' => ['arnhem.nederrijn'],
-    'aquoPlusWaarnemingMetadataLijst' => [
-        ['aquoMetadata' => ['messageID' => 1]]
+    'LocatieLijst' => [['Code' => 'arnhem.nederrijn']],
+    'AquoPlusWaarnemingMetadataLijst' => [
+        ['AquoMetadata' => ['MessageID' => 1]]
     ]
 ]);
 
-$context = stream_context_create([
-    'http' => [
-        'method' => 'POST',
-        'header' => 'Content-Type: application/json',
-        'content' => $payload,
-        'timeout' => 10
-    ]
-]);
-
-$response = @file_get_contents($url, false, $context);
-$data = json_decode($response, true);
+$data = rsc_fetch_json($url, 'debug_rws_arnhem', RSC_CACHE_TTL_CURRENT, 'POST', $payload);
 
 // Extract measurements
 $measurements = [];
@@ -40,7 +31,7 @@ if (isset($data['WaarnemingenLijst'])) {
     foreach ($data['WaarnemingenLijst'] as $waarneming) {
         $code = $waarneming['AquoMetadata']['Grootheid']['Code'] ?? '';
         $value = $waarneming['MetingenLijst'][0]['Meetwaarde']['Waarde_Numeriek'] ?? null;
-        $time = $waarneming['MetingenLijst'][0]['Tijd']['waarde'] ?? '';
+        $time = $waarneming['MetingenLijst'][0]['Tijdstip'] ?? '';
         $method = $waarneming['AquoMetadata']['WaardeBewerkingsMethode']['Code'] ?? 'NVT';
 
         if ($code === 'WATHTE' && $method !== 'GEM24H' && $waterhoogte === null) {

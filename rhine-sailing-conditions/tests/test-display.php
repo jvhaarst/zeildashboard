@@ -7,6 +7,8 @@ class Test_RSC_Display extends WP_UnitTestCase {
 
     public function setUp(): void {
         parent::setUp();
+        // Keep display tests offline: never trigger the on-render API refresh.
+        add_filter( 'rsc_enable_lazy_refresh', '__return_false' );
         // Set up cache with mock data
         RSC_Cache::set( 'current_wind', array( 'direction' => 'NO', 'speed' => 12, 'gust' => 18 ) );
         RSC_Cache::set( 'current_water_level', array( 'level' => 1.45 ) );
@@ -18,6 +20,7 @@ class Test_RSC_Display extends WP_UnitTestCase {
 
     public function tearDown(): void {
         parent::tearDown();
+        remove_filter( 'rsc_enable_lazy_refresh', '__return_false' );
         RSC_Cache::delete( 'current_wind' );
         RSC_Cache::delete( 'current_water_level' );
         RSC_Cache::delete( 'current_speed' );
@@ -75,6 +78,18 @@ class Test_RSC_Display extends WP_UnitTestCase {
         // Language-neutral checks: the mm unit and the probability value.
         $this->assertStringContainsString( 'mm', $output );
         $this->assertStringContainsString( '60%', $output );
+    }
+
+    public function test_recommendation_card_renders() {
+        $output = RSC_Display::render_shortcode( array() );
+        // Language-neutral structural checks for the eyecatcher card.
+        $this->assertStringContainsString( 'rsc-reco-card', $output );
+        $this->assertStringContainsString( 'rsc-badge', $output );
+    }
+
+    public function test_forecast_card_renders() {
+        $output = RSC_Display::render_shortcode( array() );
+        $this->assertStringContainsString( 'rsc-forecast-card', $output );
     }
 
     public function test_shortcode_output_contains_css_class() {

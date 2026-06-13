@@ -21,7 +21,16 @@ class RSC_Fetcher {
 
 	// Shared HTTP settings
 	const HTTP_TIMEOUT = 10;
-	const USER_AGENT   = 'Rhine-Sailing-Plugin/1.0';
+
+	// Refresh current conditions on render once they are older than this. Set
+	// below the 15-min cron interval so a stale dashboard self-heals on the
+	// next page view even if WP-Cron has not run (low-traffic sites).
+	const REFRESH_TTL = 20 * MINUTE_IN_SECONDS;
+
+	// Transient lock name + lifetime that prevents concurrent page loads from
+	// all triggering an on-render refresh at once.
+	const REFRESH_LOCK     = 'rsc_refresh_lock';
+	const REFRESH_LOCK_TTL = 30;
 
 	// m/s -> knots conversion factor
 	const MPS_TO_KNOTS = 1.94384;
@@ -59,6 +68,38 @@ class RSC_Fetcher {
 	}
 
 	/**
+	 * Refresh current conditions and forecast on demand if the cache is stale.
+	 *
+	 * Called from the display layer so the dashboard self-heals on a page view
+	 * when WP-Cron has not kept the data fresh. A transient lock keeps
+	 * concurrent requests from each firing the upstream APIs.
+	 *
+	 * @return void
+	 */
+	public static function maybe_refresh() {
+		// Allow sites that rely solely on WP-Cron (or a real system cron) to
+		// disable the on-render refresh: add_filter( 'rsc_enable_lazy_refresh', '__return_false' );
+		if ( ! apply_filters( 'rsc_enable_lazy_refresh', true ) ) {
+			return;
+		}
+
+		if ( ! RSC_Cache::is_stale( 'current_wind', self::REFRESH_TTL ) ) {
+			return;
+		}
+
+		// Bail if another request is already refreshing.
+		if ( false !== get_transient( self::REFRESH_LOCK ) ) {
+			return;
+		}
+		set_transient( self::REFRESH_LOCK, 1, self::REFRESH_LOCK_TTL );
+
+		self::fetch_current_conditions();
+		self::fetch_forecast();
+
+		delete_transient( self::REFRESH_LOCK );
+	}
+
+	/**
 	 * Fetch wind forecast and cache it.
 	 *
 	 * @return bool True on success, false on failure
@@ -82,7 +123,7 @@ class RSC_Fetcher {
 	 * @return array|false Wind data or false on error
 	 */
 	private static function fetch_openmeteo_wind() {
-		$url = self::OPENMETEO_API_URL . '?latitude=' . self::LOCATION_LATITUDE . '&longitude=' . self::LOCATION_LONGITUDE . '&current=wind_speed_10m,wind_direction_10m&timezone=Europe/Amsterdam';
+		$url = self::OPENMETEO_API_URL . '?latitude=' . self::LOCATION_LATITUDE . '&longitude=' . self::LOCATION_LONGITUDE . '&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m&timezone=Europe/Amsterdam';
 
 		$data = self::http_get_json( $url, 'Open-Meteo wind' );
 		if ( false === $data || ! isset( $data['current'] ) ) {
@@ -98,8 +139,13 @@ class RSC_Fetcher {
 		$wind_direction_deg = intval( $data['current']['wind_direction_10m'] );
 		$wind_direction     = self::degrees_to_direction( $wind_direction_deg );
 
-		// Estimate gust as 150% of average wind speed (typical ratio).
-		$gust_knots = $wind_speed_knots * 1.5;
+		// Prefer the real measured gust; fall back to a 150% estimate only when
+		// the provider omits the field.
+		if ( isset( $data['current']['wind_gusts_10m'] ) ) {
+			$gust_knots = floatval( $data['current']['wind_gusts_10m'] ) * self::KMH_TO_KNOTS;
+		} else {
+			$gust_knots = $wind_speed_knots * 1.5;
+		}
 
 		$wind_data = array(
 			'direction' => $wind_direction,
@@ -250,12 +296,16 @@ class RSC_Fetcher {
 	 * @return array|false Decoded response with 'WaarnemingenLijst', or false.
 	 */
 	private static function rws_request() {
+		// DDAPI 2.0 expects PascalCase keys and locations as objects with a Code.
+		// (The earlier lowercase/string-list form now returns HTTP 400.)
 		$payload = wp_json_encode( array(
-			'locatieLijst'                    => array( self::RWS_LOCATION ),
-			'aquoPlusWaarnemingMetadataLijst' => array(
+			'LocatieLijst'                    => array(
+				array( 'Code' => self::RWS_LOCATION ),
+			),
+			'AquoPlusWaarnemingMetadataLijst' => array(
 				array(
-					'aquoMetadata' => array(
-						'messageID' => 1,
+					'AquoMetadata' => array(
+						'MessageID' => 1,
 					),
 				),
 			),
@@ -264,7 +314,7 @@ class RSC_Fetcher {
 		$args = array(
 			'timeout'     => self::HTTP_TIMEOUT,
 			'httpversion' => '1.1',
-			'user-agent'  => self::USER_AGENT,
+			'user-agent'  => self::user_agent(),
 			'headers'     => array(
 				'Content-Type' => 'application/json',
 			),
@@ -306,7 +356,7 @@ class RSC_Fetcher {
 		$args = array(
 			'timeout'     => self::HTTP_TIMEOUT,
 			'httpversion' => '1.1',
-			'user-agent'  => self::USER_AGENT,
+			'user-agent'  => self::user_agent(),
 		);
 
 		$response = wp_remote_get( $url, $args );
@@ -342,6 +392,16 @@ class RSC_Fetcher {
 		$directions = array( 'N', 'NNO', 'NO', 'ONO', 'O', 'OZO', 'ZO', 'ZZO', 'Z', 'ZZW', 'ZW', 'WZW', 'W', 'WNW', 'NW', 'NNW' );
 		$index      = intval( round( $degrees / 22.5 ) ) % 16;
 		return $directions[ $index ];
+	}
+
+	/**
+	 * Build the outbound User-Agent string from the plugin version.
+	 *
+	 * @return string User-Agent header value.
+	 */
+	private static function user_agent() {
+		$version = defined( 'RSC_PLUGIN_VERSION' ) ? RSC_PLUGIN_VERSION : 'dev';
+		return 'Rhine-Sailing-Plugin/' . $version;
 	}
 
 	/**

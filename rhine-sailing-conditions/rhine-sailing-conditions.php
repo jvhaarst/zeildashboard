@@ -3,7 +3,7 @@
  * Plugin Name: Rhine Sailing Conditions
  * Plugin URI: https://example.com
  * Description: Display real-time sailing conditions on the Rhine River
- * Version: 1.3.0
+ * Version: 1.4.0
  * Author: Sailing Club
  * License: GPL2
  * Text Domain: rhine-sailing-conditions
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Define plugin paths, URLs, and version constants for use throughout the plugin.
 define( 'RSC_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'RSC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'RSC_PLUGIN_VERSION', '1.3.0' );
+define( 'RSC_PLUGIN_VERSION', '1.4.0' );
 
 // ============================================================================
 // Class Includes
@@ -28,6 +28,7 @@ define( 'RSC_PLUGIN_VERSION', '1.3.0' );
 // Load core plugin classes for caching, validation, data fetching, and display.
 require_once RSC_PLUGIN_PATH . 'includes/class-cache.php';
 require_once RSC_PLUGIN_PATH . 'includes/class-validator.php';
+require_once RSC_PLUGIN_PATH . 'includes/class-assessment.php';
 require_once RSC_PLUGIN_PATH . 'includes/class-fetcher.php';
 require_once RSC_PLUGIN_PATH . 'includes/class-display.php';
 
@@ -99,6 +100,11 @@ function rsc_schedule_cron() {
     if ( ! wp_next_scheduled( 'rsc_fetch_forecast' ) ) {
         wp_schedule_event( time(), '30min', 'rsc_fetch_forecast' );
     }
+
+    // Fetch once immediately so the dashboard has data the moment the plugin is
+    // active, instead of showing "unavailable" until the first cron tick.
+    RSC_Fetcher::fetch_current_conditions();
+    RSC_Fetcher::fetch_forecast();
 }
 
 register_deactivation_hook( __FILE__, 'rsc_unschedule_cron' );

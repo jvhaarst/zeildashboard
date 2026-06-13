@@ -27,8 +27,11 @@ class RSC_Cache {
         // Write both independently. update_option() returns false when the
         // stored value is unchanged, which is not an error — so we must not
         // short-circuit the timestamp write behind the data write.
-        update_option( $option_key, $data );
-        update_option( $timestamp_key, time() );
+        //
+        // autoload is 'no': this data churns every 15-30 min and is only read
+        // on pages with the shortcode, so it should not load on every request.
+        update_option( $option_key, $data, false );
+        update_option( $timestamp_key, time(), false );
 
         return true;
     }

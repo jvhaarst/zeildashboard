@@ -48,7 +48,16 @@ RSC_LANG=fy php -S localhost:8765
 ```
 
 Requirements: PHP 7.4+ with outbound internet access (the dashboards call
-Open-Meteo and the Rijkswaterstaat DDAPI). Press `Ctrl+C` to stop the server.
+Open-Meteo and the Rijkswaterstaat DDAPI). The cURL extension is recommended;
+the dashboards fall back to a stream wrapper if it is unavailable. Press
+`Ctrl+C` to stop the server.
+
+**Production-ready:** the dashboards share `examples/lib/data.php`, which fetches
+over cURL and caches every response on disk (`sys_get_temp_dir()`, 15 min for
+current conditions, 30 min for the forecast). This keeps concurrent visitors
+from hammering the upstream APIs, and a failed fetch falls back to the last good
+cached value instead of blanking the page — so they can be deployed publicly,
+not just run locally.
 
 ## Data Sources
 
@@ -70,19 +79,75 @@ Open-Meteo and the Rijkswaterstaat DDAPI). Press `Ctrl+C` to stop the server.
 ### Classes
 - `RSC_Fetcher` – Handles API calls to Open-Meteo and Rijkswaterstaat DDAPI
   - `fetch_current_conditions()` – Orchestrates wind + water fetch and caching
-  - `fetch_openmeteo_wind()` – Current wind from Open-Meteo
+  - `fetch_openmeteo_wind()` – Current wind (incl. real measured gusts) from Open-Meteo
   - `fetch_openmeteo_forecast()` – 6-hour wind + precipitation forecast from Open-Meteo (single request)
   - `fetch_rws_measurements()` – Water height (WATHTE), current speed (STROOMSHD)
     and temperature (T) from a single RWS DDAPI request
+  - `maybe_refresh()` – On-render self-heal when the cache is stale (see Caching Strategy)
 - `RSC_Validator` – Validates API response data and measurement values
   (`validate_wind`, `validate_water_level`, `validate_current_speed`, `validate_temperature`)
-- `RSC_Cache` – Wraps WordPress options for data storage with timestamps
-- `RSC_Display` – Renders the shortcode (Dutch UI) with a stale-data warning
+- `RSC_Assessment` – Framework-agnostic sailing assessment (`evaluate()`). Pure
+  PHP with no WordPress dependency, so the standalone example dashboards reuse
+  the **same** thresholds (no drift between plugin and examples).
+- `RSC_Cache` – Wraps WordPress options (non-autoloaded) for data storage with timestamps
+- `RSC_Display` – Renders the shortcode (Dutch UI): recommendation eyecatcher,
+  wind/water/assessment cards, 6-hour forecast, and a stale-data warning
+
+### Rijkswaterstaat DDAPI request format
+The `OphalenLaatsteWaarnemingen` endpoint expects PascalCase keys with locations
+as objects, e.g.:
+```json
+{"LocatieLijst":[{"Code":"driel.boven"}],"AquoPlusWaarnemingMetadataLijst":[{"AquoMetadata":{"MessageID":1}}]}
+```
+Measurement timestamps are returned in the `Tijdstip` field (ISO 8601).
 
 ### Caching Strategy
-- Current conditions: Cached for 30 minutes (fetched every 15 min)
-- Forecasts: Cached for 60 minutes (fetched every 30 min)
-- Stale data displayed with "outdated" warning if >60 min old
+- Current conditions fetched every 15 min, forecasts every 30 min, via WP-Cron.
+- **Activation fetch:** data is fetched once on plugin activation so the
+  dashboard is never empty on a fresh install.
+- **On-render self-heal:** if the cached current conditions are older than
+  20 minutes (e.g. WP-Cron didn't run on a low-traffic site), the shortcode
+  refreshes them before rendering. A 30-second transient lock prevents
+  concurrent page loads from all hitting the APIs at once.
+- Stale data is still displayed with an "outdated" warning if older than 60 min.
+- Sites that prefer cron-only operation can disable the on-render refresh:
+  ```php
+  add_filter( 'rsc_enable_lazy_refresh', '__return_false' );
+  ```
+
+### Reliable cron in production
+WP-Cron only runs when the site receives traffic. The on-render self-heal above
+covers low-traffic sites, but for the most reliable scheduling, disable WP-Cron
+and drive it from a real system cron:
+```php
+// wp-config.php
+define( 'DISABLE_WP_CRON', true );
+```
+```cron
+# every 15 minutes
+*/15 * * * * curl -s https://your-site.example/wp-cron.php?doing_wp_cron >/dev/null 2>&1
+```
+
+## Running the tests
+
+The plugin ships PHPUnit tests under `tests/`. HTTP is mocked via the
+`pre_http_request` filter using the JSON fixtures in `tests/fixtures/`, so the
+fetcher tests run **offline and deterministically** (no live API calls).
+
+They use the WordPress PHPUnit test harness, which must be installed once. The
+easiest way is via WP-CLI, which generates the installer script and config:
+
+```bash
+# Generates phpunit.xml.dist + bin/install-wp-tests.sh in the plugin
+wp scaffold plugin-tests rhine-sailing-conditions
+
+# Installs the WP test library + a throwaway test database, then run PHPUnit
+bin/install-wp-tests.sh wordpress_test root '' localhost latest
+phpunit
+```
+
+`RSC_Assessment` is pure PHP and is covered by `tests/test-assessment.php`
+without needing WordPress.
 
 ## Future Enhancements
 

@@ -1,162 +1,275 @@
-/* Rhine Sailing Conditions Dashboard */
+/* Rhine Sailing Conditions Dashboard
+ *
+ * Palette matches peterhensen.nl: navy #222e65, blue #326bff, yellow accent
+ * #f4d011, light panel background. Fonts are inherited from the host theme
+ * (Divi) so the widget blends in; headings get the navy/italic brand treatment.
+ * Everything is scoped under .rsc- to avoid colliding with the theme.
+ */
 
 .rsc-dashboard {
     margin: 20px 0;
-    padding: 0;
     font-family: inherit;
-}
-
-.rsc-header {
-    background-color: #f5f5f5;
-    padding: 15px;
-    border-bottom: 2px solid #ddd;
-    margin-bottom: 15px;
-}
-
-.rsc-header h3 {
-    margin: 0 0 5px 0;
-    font-size: 18px;
     color: #333;
+}
+
+/* Header */
+.rsc-header {
+    margin-bottom: 18px;
+}
+
+.rsc-title {
+    margin: 0;
+    font-style: italic;
+    font-weight: 800;
+    color: #222e65;
+    font-size: 1.8em;
+    line-height: 1.2;
+}
+
+.rsc-title::after {
+    content: "";
+    display: block;
+    width: 60px;
+    height: 4px;
+    background: #f4d011;
+    border-radius: 3px;
+    margin-top: 10px;
 }
 
 .rsc-updated {
-    margin: 0;
-    font-size: 12px;
-    color: #666;
+    margin: 8px 0 0;
+    font-size: 0.85em;
+    color: #4f5883;
 }
 
-.rsc-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    padding: 15px 0;
+/* Recommendation eyecatcher */
+.rsc-reco-card {
+    background: linear-gradient(135deg, #326bff 0%, #222e65 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin-bottom: 22px;
+    box-shadow: 0 10px 30px rgba(34, 46, 101, 0.25);
 }
 
-/* Current Conditions Panel */
-.rsc-current {
+.rsc-reco-title {
+    margin: 0 0 12px;
+    font-style: italic;
+    font-weight: 800;
+    font-size: 1.3em;
+    color: #fff;
+}
+
+.rsc-reco-row {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 12px;
 }
 
-.rsc-condition {
-    background: white;
-    border: 1px solid #ddd;
-    padding: 12px;
-    border-radius: 4px;
+.rsc-badge {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 22px;
+    font-size: 1.05em;
+    font-weight: 700;
+}
+
+.rsc-badge-good {
+    background: #d4edda;
+    color: #155724;
+}
+
+.rsc-badge-caution {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.rsc-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.rsc-chip {
+    background: #fff;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border-left: 4px solid #f4d011;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.rsc-chip-label {
+    color: #666;
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.rsc-chip-value {
+    font-size: 1.05em;
+    font-weight: bold;
+    color: #222e65;
+}
+
+.rsc-reco-hint {
+    margin: 14px 0 0;
+    opacity: 0.9;
+    font-size: 0.88em;
+}
+
+/* Card grid */
+.rsc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.rsc-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.rsc-card-title {
+    margin: 0 0 16px;
+    font-style: italic;
+    font-weight: 700;
+    color: #222e65;
+    font-size: 1.15em;
+}
+
+.rsc-metric {
+    margin-bottom: 16px;
+}
+
+.rsc-metric:last-child {
+    margin-bottom: 0;
 }
 
 .rsc-label {
-    font-size: 12px;
     color: #666;
+    font-size: 0.78em;
     text-transform: uppercase;
-    margin-bottom: 5px;
-    font-weight: bold;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
 }
 
 .rsc-value {
-    font-size: 18px;
+    font-size: 1.9em;
     font-weight: bold;
-    color: #333;
-    margin-bottom: 3px;
+    color: #222e65;
+    line-height: 1.1;
+}
+
+.rsc-value-sm {
+    font-size: 1.4em;
+}
+
+.rsc-unit {
+    font-size: 0.5em;
+    font-weight: 600;
+    color: #4f5883;
 }
 
 .rsc-sub {
-    font-size: 12px;
     color: #999;
+    font-size: 0.85em;
+    margin-top: 5px;
 }
 
-/* Forecast Panel */
-.rsc-forecast {
-    display: flex;
-    flex-direction: column;
-}
-
-.rsc-forecast-header {
-    margin-bottom: 12px;
-}
-
-.rsc-forecast-header h4 {
-    margin: 0;
-    font-size: 14px;
-    color: #333;
-}
-
-.rsc-forecast-chart {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding: 10px;
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.rsc-forecast-point {
-    display: flex;
-    flex-direction: column;
+.rsc-direction {
+    display: inline-flex;
     align-items: center;
-    padding: 8px;
-    background: #f9f9f9;
-    border-radius: 3px;
-    min-width: 60px;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #326bff 0%, #222e65 100%);
+    color: #fff;
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: 6px;
+}
+
+/* Forecast */
+.rsc-forecast-card {
+    grid-column: 1 / -1;
+}
+
+.rsc-forecast-grid {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+}
+
+.rsc-forecast-cell {
+    flex: 1 1 0;
+    min-width: 78px;
     text-align: center;
+    background: #f9fafd;
+    border-radius: 8px;
+    border-top: 3px solid #f4d011;
+    padding: 12px 8px;
 }
 
 .rsc-forecast-hour {
-    font-size: 11px;
-    color: #666;
-    margin-bottom: 4px;
-}
-
-.rsc-forecast-speed {
-    font-size: 13px;
     font-weight: bold;
-    color: #333;
+    color: #222e65;
+    margin-bottom: 8px;
 }
 
-/* Error State */
+.rsc-forecast-line {
+    font-size: 0.95em;
+    color: #333;
+    margin: 2px 0;
+}
+
+.rsc-forecast-rain {
+    color: #326bff;
+    font-weight: bold;
+}
+
+.rsc-forecast-sub {
+    font-size: 0.8em;
+    color: #888;
+}
+
+/* Error + stale states */
 .rsc-error {
-    background-color: #fee;
-    color: #c33;
+    background-color: #f8d7da;
+    color: #721c24;
     padding: 15px;
-    border: 1px solid #fcc;
-    border-radius: 4px;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
     margin: 20px 0;
 }
 
-/* Stale Data Warning */
 .rsc-stale {
     background-color: #fff3cd;
     color: #856404;
     padding: 10px 15px;
     border: 1px solid #ffeeba;
-    border-radius: 4px;
-    margin-bottom: 15px;
-    font-size: 13px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 0.88em;
 }
 
-/* Responsive: Mobile */
+/* Responsive */
 @media (max-width: 600px) {
-    .rsc-container {
+    .rsc-grid {
         grid-template-columns: 1fr;
         gap: 15px;
     }
 
-    .rsc-forecast-chart {
-        flex-wrap: wrap;
-    }
-
-    .rsc-forecast-point {
-        min-width: 50px;
-        padding: 6px;
-    }
-
-    .rsc-header h3 {
-        font-size: 16px;
+    .rsc-title {
+        font-size: 1.5em;
     }
 
     .rsc-value {
-        font-size: 16px;
+        font-size: 1.6em;
     }
 }
