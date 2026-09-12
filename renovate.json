@@ -5,9 +5,24 @@
   ],
   "packageRules": [
     {
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
       "description": "Group the php:apache base-image bumps",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["php"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "php"
+      ],
       "groupName": "php-apache base image"
     }
   ]
