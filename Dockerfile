@@ -5,6 +5,16 @@
 # stream-wrapper fallback, so no extra extensions are needed.
 FROM php:8.5-apache@sha256:7cd25eb48f9763dfeabe8fda3939897aca2001802fadeafa1b602f26c735ef96
 
+# CVE-2026-111497, the out-of-bounds write in the Brotli C decoder: the
+# digest-pinned base carries libbrotli1 1.1.0-2+b7, while the fix is
+# 1.1.0-2+deb13u1 in trixie-security, which this image already has enabled.
+# Apache never brotli-decodes a request body, so nothing inbound reaches the
+# decoder -- this closes the outbound libcurl path only. Drop it once the base
+# rebuilds past the fix.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libbrotli1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Bake the standalone dashboard into the docroot. The directory layout must
 # match what the code expects: examples/lib/data.php resolves
 # ../../includes/class-assessment.php, i.e. /var/www/includes/class-assessment.php.
