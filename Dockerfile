@@ -3,7 +3,7 @@
 # Stock multi-arch PHP image (arm64 for the Raspberry Pi k3s nodes). The curl
 # and openssl extensions are enabled by default; the dashboards also have a
 # stream-wrapper fallback, so no extra extensions are needed.
-FROM php:8.5-apache@sha256:4cc63b3d4e05c40da73e7af5d39364ca2678ac07208919497bda3bbab975be95
+FROM php:8.5-apache@sha256:304eac8c3e14c194d05e1d67e756b641051d31d6848dd74db47dfae95f3142b8
 
 # CVE-2026-111497, the out-of-bounds write in the Brotli C decoder: the
 # digest-pinned base carries libbrotli1 1.1.0-2+b7, while the fix is
